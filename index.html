@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <!-- Важно для мобильной верстки и выкладки -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0e1a26">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Крестики Дип">
+    
+    <!-- Иконки (для установки на телефон) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%2331738f'%3E%3Crect width='100' height='100' rx='20' /%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white' font-family='system-ui'%3E✕%3C/text%3E%3C/svg%3E">
+    
+    <title>Крестики-нолики / Дип и Женя</title>
+    
+    <style>
+        /* Твои стили (я их немного докрутил под PWA) */
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1a2f3f 0%, #0e1a26 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
+        }
+        
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 20px 16px 28px;
+            box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: min(420px, 100%);
+            margin: auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            font-weight: 500;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            margin: 0 0 8px 0;
+            text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
+        }
+        
+        .status {
+            background: #1e3a4a;
+            color: #b3e9ff;
+            text-align: center;
+            padding: 14px 10px;
+            border-radius: 60px;
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+            box-shadow: inset 0 2px 5px #0b1c26, 0 8px 12px rgba(0, 0, 0, 0.4);
+            border: 1px solid #2f5568;
+        }
+        
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            aspect-ratio: 1 / 1;
+            margin-bottom: 28px;
+        }
+        
+        .cell {
+            background: #1f3e4b;
+            border-radius: 28px;
+            box-shadow: 0 10px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            font-weight: 400;
+            color: white;
+            transition: all 0.07s ease;
+            aspect-ratio: 1 / 1;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .cell:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .cell.x-move {
+            color: #6ee7f7;
+            text-shadow: 0 0 20px #00ccff, 0 0 40px #0088aa;
+        }
+        
+        .cell.o-move {
+            color: #ffb87c;
+            text-shadow: 0 0 20px #ff9500, 0 0 40px #aa5500;
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 18px 16px;
+            border-radius: 60px;
+            border: none;
+            background: #31738f;
+            color: white;
+            font-size: 1.6rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 12px 0 #124052, 0 8px 20px #00000080;
+            transition: 0.1s ease;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            margin-bottom: 16px;
+        }
+        
+        .reset-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 4px 0 #124052, 0 8px 20px #00000080;
+        }
+        
+        .online-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .online-badge {
+            text-align: center;
+            color: #8ab3cf;
+            font-size: 1rem;
+            background: #152b36;
+            padding: 12px 18px;
+            border-radius: 60px;
+            border: 1px dashed #3f6f88;
+            transition: 0.2s;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .online-badge:active {
+            background: #1d3f4e;
+            transform: scale(0.98);
+        }
+        
+        .install-hint {
+            text-align: center;
+            color: #4f7b94;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+        
+        footer {
+            text-align: center;
+            color: #366277;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            border-top: 1px solid #1f4355;
+            padding-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>❌ крестики ⭕</h1>
+        
+        <div class="status" id="status">Ходит X</div>
+        
+        <div class="board" id="board">
+            <!-- Генерируется из JS -->
+        </div>
+        
+        <button class="reset-btn" id="reset">⟳ новая игра</button>
+        
+        <div class="online-section">
+            <div class="online-badge" id="onlineBtn">
+                🌐 онлайн режим — скоро
+            </div>
+            <div class="install-hint" id="installHint">
+                📲 добавь на главный экран — будет как приложение
+            </div>
+        </div>
+        
+        <footer>⚡ сделано Женей и Дипом</footer>
+    </div>
+
+    <script>
+        (function() {
+            // ---------- Игровые переменные ----------
+            let board = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'X';
+            let gameActive = true;
+            
+            const statusEl = document.getElementById('status');
+            const boardEl = document.getElementById('board');
+            const onlineBtn = document.getElementById('onlineBtn');
+            
+            const winPatterns = [
+                [0,1,2], [3,4,5], [6,7,8],
+                [0,3,6], [1,4,7], [2,5,8],
+                [0,4,8], [2,4,6]
+            ];
+
+            // ---------- Проверка победителя ----------
+            function getWinner() {
+                for (let p of winPatterns) {
+                    const [a,b,c] = p;
+                    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                        return board[a]; // 'X' или 'O'
+                    }
+                }
+                return board.includes('') ? null : 'draw';
+            }
+
+            // ---------- Обновление UI ----------
+            function renderBoard() {
+                let html = '';
+                for (let i = 0; i < 9; i++) {
+                    let cellClass = 'cell';
+                    if (board[i] === 'X') cellClass += ' x-move';
+                    if (board[i] === 'O') cellClass += ' o-move';
+                    html += `<div class="${cellClass}" data-index="${i}">${board[i]}</div>`;
+                }
+                boardEl.innerHTML = html;
+                
+                const winner = getWinner();
+                if (winner === 'X') {
+                    statusEl.innerText = '❌ X победил!';
+                    gameActive = false;
+                } else if (winner === 'O') {
+                    statusEl.innerText = '⭕ O победил!';
+                    gameActive = false;
+                } else if (winner === 'draw') {
+                    statusEl.innerText = '🤝 ничья!';
+                    gameActive = false;
+                } else {
+                    statusEl.innerText = `ходит ${currentPlayer}`;
+                    gameActive = true;
+                }
+            }
+
+            // ---------- Обработка хода ----------
+            function handleMove(index) {
+                if (!gameActive) return;
+                if (board[index] !== '') return;
+                
+                board[index] = currentPlayer;
+                
+                if (getWinner()) {
+                    gameActive = false;
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                }
+                
+                renderBoard();
+            }
+
+            // ---------- Сброс ----------
+            function resetGame() {
+                board = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X';
+                gameActive = true;
+                renderBoard();
+            }
+
+            // ---------- События ----------
+            boardEl.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (!cell) return;
+                const index = cell.dataset.index;
+                if (index !== undefined) handleMove(parseInt(index));
+            });
+
+            document.getElementById('reset').addEventListener('click', resetGame);
+            
+            onlineBtn.addEventListener('click', () => {
+                alert('🚧 Женя, онлайн режим в разработке!\n\nСкоро здесь будет мультиплеер: создавай комнату и кидай ссылку другу.');
+            });
+
+            // Подсказка по установке на iPhone
+            const installHint = document.getElementById('installHint');
+            const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            
+            if (isiOS) {
+                installHint.style.display = 'block';
+                installHint.innerText = '📲 нажми "Поделиться" → "На экран домой"';
+            } else {
+                // На Android можно показать общую подсказку
+                installHint.innerText = '📲 добавь в закладки / на главный';
+            }
+
+            // Старт
+            renderBoard();
+        })();
+    </script>
+</body>
+</html>
