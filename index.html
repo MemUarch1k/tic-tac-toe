@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Крестики-нолики онлайн</title>
+    <title>Крестики-нолики с ботом</title>
     <style>
-        /* Стили такие же, как были - всё красиво */
         * {
             box-sizing: border-box;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -40,6 +39,34 @@
             letter-spacing: 2px;
             margin: 0 0 8px 0;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
+        }
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .mode-btn {
+            background: #1e3a4a;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #0b1a22;
+            transition: 0.1s ease;
+            flex: 1;
+        }
+        .mode-btn.active {
+            background: #31738f;
+            box-shadow: 0 5px 0 #124052;
+            transform: translateY(-2px);
+        }
+        .mode-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #0b1a22;
         }
         .status {
             background: #1e3a4a;
@@ -108,100 +135,74 @@
             transform: translateY(8px);
             box-shadow: 0 4px 0 #124052, 0 8px 20px #00000080;
         }
-        .online-section {
+        .difficulty-selector {
             display: flex;
-            flex-direction: column;
             gap: 10px;
-            margin-top: 16px;
+            margin-top: 10px;
+            justify-content: center;
         }
-        .online-btn {
-            text-align: center;
-            color: white;
-            font-size: 1.2rem;
-            background: #2a5f7a;
-            padding: 14px 18px;
-            border-radius: 60px;
-            border: none;
-            box-shadow: 0 6px 0 #124052;
-            transition: 0.1s ease;
-            cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
-            font-weight: 500;
-        }
-        .online-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #124052;
-        }
-        .room-info {
+        .diff-btn {
             background: #152b36;
-            padding: 12px;
-            border-radius: 30px;
             color: #8ab3cf;
-            font-size: 0.9rem;
-            text-align: center;
-            word-break: break-all;
             border: 1px solid #2f5568;
+            padding: 8px 15px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        .hidden {
-            display: none;
+        .diff-btn.active {
+            background: #2a5f7a;
+            color: white;
+            border-color: #6ee7f7;
+        }
+        footer {
+            text-align: center;
+            color: #366277;
+            margin-top: 20px;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
-        <h1>❌ крестики онлайн ⭕</h1>
+        <h1>❌ крестики с ботом ⭕</h1>
         
-        <div class="status" id="status">Загрузка...</div>
+        <div class="mode-selector">
+            <button class="mode-btn active" id="mode2p">👥 2 игрока</button>
+            <button class="mode-btn" id="modeBot">🤖 Против бота</button>
+        </div>
+        
+        <div class="difficulty-selector" id="difficultyPanel">
+            <button class="diff-btn active" data-diff="easy">🌱 Легкий</button>
+            <button class="diff-btn" data-diff="medium">🌿 Средний</button>
+            <button class="diff-btn" data-diff="hard">🌲 Сложный</button>
+        </div>
+        
+        <div class="status" id="status">Ходит X</div>
         
         <div class="board" id="board"></div>
         
-        <div class="online-section">
-            <button class="online-btn" id="createRoomBtn">➕ Создать комнату</button>
-            <div class="room-info hidden" id="roomInfo">
-                <div>🔗 Ссылка для друга:</div>
-                <div class="room-link" id="roomLink"></div>
-                <button class="online-btn" style="font-size: 1rem; padding: 10px; margin-top: 10px;" id="copyLinkBtn">📋 Копировать</button>
-            </div>
-            <button class="online-btn" id="joinRoomBtn">🔑 Присоединиться по коду</button>
-            <div class="room-info hidden" id="joinInput">
-                <input type="text" id="roomIdInput" placeholder="Введите код комнаты" style="width: 100%; padding: 12px; border-radius: 30px; border: none; background: #1e3a4a; color: white; text-align: center; font-size: 1rem;">
-                <button class="online-btn" style="font-size: 1rem; padding: 10px; margin-top: 10px;" id="joinConfirmBtn">Войти</button>
-            </div>
-            <button class="reset-btn" id="reset">⟳ новая игра (локально)</button>
-        </div>
+        <button class="reset-btn" id="reset">⟳ новая игра</button>
+        <footer>⚡ играй против друга или бота</footer>
     </div>
-
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         (function() {
-            // 🔥 ВСТАВЬ СВОИ КЛЮЧИ СЮДА 🔥
-            const SUPABASE_URL = 'https://inqlsuaqgyotjoppwmbc.supabase.co';
-            const SUPABASE_KEY = 'sb_publishable_N1jPiAsrrtmIUnA8Gtuwxog_-9ZS...'; // вставь полный ключ!
-            
-            // Инициализация Supabase
-            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-            // ---------- Игровые переменные ----------
+            // ---------- Состояние игры ----------
             let board = ['', '', '', '', '', '', '', '', ''];
             let currentPlayer = 'X';
             let gameActive = true;
-            let myPlayer = null;
-            let roomId = null;
-            let gameChannel = null;
+            let mode = '2p'; // '2p' или 'bot'
+            let difficulty = 'easy'; // 'easy', 'medium', 'hard'
             
             const statusEl = document.getElementById('status');
             const boardEl = document.getElementById('board');
-            const createRoomBtn = document.getElementById('createRoomBtn');
-            const joinRoomBtn = document.getElementById('joinRoomBtn');
-            const roomInfo = document.getElementById('roomInfo');
-            const roomLink = document.getElementById('roomLink');
-            const copyLinkBtn = document.getElementById('copyLinkBtn');
-            const joinInput = document.getElementById('joinInput');
-            const roomIdInput = document.getElementById('roomIdInput');
-            const joinConfirmBtn = document.getElementById('joinConfirmBtn');
+            const mode2p = document.getElementById('mode2p');
+            const modeBot = document.getElementById('modeBot');
             const resetBtn = document.getElementById('reset');
+            const difficultyPanel = document.getElementById('difficultyPanel');
+            const diffBtns = document.querySelectorAll('.diff-btn');
             
             const winPatterns = [
                 [0,1,2], [3,4,5], [6,7,8],
@@ -209,6 +210,7 @@
                 [0,4,8], [2,4,6]
             ];
 
+            // ---------- Проверка победителя ----------
             function getWinner() {
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
@@ -219,6 +221,7 @@
                 return board.includes('') ? null : 'draw';
             }
 
+            // ---------- Отрисовка доски ----------
             function renderBoard() {
                 let html = '';
                 for (let i = 0; i < 9; i++) {
@@ -242,47 +245,152 @@
                 } else {
                     statusEl.innerText = `ходит ${currentPlayer}`;
                     gameActive = true;
+                    
+                    // Если режим бота и сейчас ходит бот (O)
+                    if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
+                        setTimeout(botMove, 500); // бот думает 0.5 сек
+                    }
                 }
             }
 
+            // ---------- Ход игрока ----------
             function handleMove(index) {
                 if (!gameActive) return;
                 if (board[index] !== '') return;
                 
-                // В онлайн режиме проверяем, чей ход
-                if (roomId && gameChannel) {
-                    if ((currentPlayer === 'X' && myPlayer !== 'X') || 
-                        (currentPlayer === 'O' && myPlayer !== 'O')) {
-                        alert('Сейчас не твой ход!');
-                        return;
+                // В режиме бота игрок всегда X
+                if (mode === 'bot' && currentPlayer !== 'X') return;
+                
+                // Делаем ход
+                board[index] = currentPlayer;
+                
+                // Проверяем победу
+                if (getWinner()) {
+                    gameActive = false;
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                }
+                
+                renderBoard();
+            }
+
+            // ---------- Логика бота ----------
+            function botMove() {
+                if (!gameActive || currentPlayer !== 'O') return;
+                
+                let moveIndex = -1;
+                
+                // Копия доски для анализа
+                const boardCopy = [...board];
+                
+                if (difficulty === 'easy') {
+                    // Легкий: случайный ход
+                    const empty = boardCopy.reduce((acc, cell, idx) => {
+                        if (cell === '') acc.push(idx);
+                        return acc;
+                    }, []);
+                    
+                    if (empty.length > 0) {
+                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                    }
+                }
+                else if (difficulty === 'medium') {
+                    // Средний: 50% умный, 50% случайный
+                    if (Math.random() > 0.5) {
+                        moveIndex = getSmartMove(boardCopy, 'O');
                     }
                     
-                    // Отправляем ход через канал
-                    const newBoard = [...board];
-                    newBoard[index] = currentPlayer;
-                    
-                    gameChannel.send({
-                        type: 'broadcast',
-                        event: 'MOVE',
-                        payload: { 
-                            board: newBoard,
-                            nextPlayer: currentPlayer === 'X' ? 'O' : 'X'
+                    if (moveIndex === -1) {
+                        const empty = boardCopy.reduce((acc, cell, idx) => {
+                            if (cell === '') acc.push(idx);
+                            return acc;
+                        }, []);
+                        if (empty.length > 0) {
+                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
                         }
-                    });
-                } else {
-                    // Локальный режим
-                    board[index] = currentPlayer;
+                    }
+                }
+                else { // hard
+                    // Сложный: умный ход
+                    moveIndex = getSmartMove(boardCopy, 'O');
+                    
+                    // Если нет умного хода, случайный
+                    if (moveIndex === -1) {
+                        const empty = boardCopy.reduce((acc, cell, idx) => {
+                            if (cell === '') acc.push(idx);
+                            return acc;
+                        }, []);
+                        if (empty.length > 0) {
+                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                        }
+                    }
+                }
+                
+                if (moveIndex !== -1) {
+                    board[moveIndex] = 'O';
                     
                     if (getWinner()) {
                         gameActive = false;
                     } else {
-                        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                        currentPlayer = 'X';
                     }
                     
                     renderBoard();
                 }
             }
+            
+            // Умный ход: победа/блокировка/центр/углы
+            function getSmartMove(boardArr, botSymbol) {
+                const playerSymbol = botSymbol === 'O' ? 'X' : 'O';
+                
+                // 1. Проверить, может ли бот выиграть
+                for (let i = 0; i < 9; i++) {
+                    if (boardArr[i] === '') {
+                        boardArr[i] = botSymbol;
+                        if (checkWin(boardArr, botSymbol)) {
+                            boardArr[i] = '';
+                            return i;
+                        }
+                        boardArr[i] = '';
+                    }
+                }
+                
+                // 2. Проверить, может ли игрок выиграть (заблокировать)
+                for (let i = 0; i < 9; i++) {
+                    if (boardArr[i] === '') {
+                        boardArr[i] = playerSymbol;
+                        if (checkWin(boardArr, playerSymbol)) {
+                            boardArr[i] = '';
+                            return i;
+                        }
+                        boardArr[i] = '';
+                    }
+                }
+                
+                // 3. Занять центр
+                if (boardArr[4] === '') return 4;
+                
+                // 4. Занять углы
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(i => boardArr[i] === '');
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+                
+                return -1; // нет умного хода
+            }
+            
+            function checkWin(boardArr, symbol) {
+                for (let p of winPatterns) {
+                    const [a,b,c] = p;
+                    if (boardArr[a] === symbol && boardArr[b] === symbol && boardArr[c] === symbol) {
+                        return true;
+                    }
+                }
+                return false;
+            }
 
+            // ---------- Сброс игры ----------
             function resetGame() {
                 board = ['', '', '', '', '', '', '', '', ''];
                 currentPlayer = 'X';
@@ -290,87 +398,31 @@
                 renderBoard();
             }
 
-            // ---------- Supabase онлайн функции ----------
-            async function createRoom() {
-                const newRoomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                roomId = newRoomId;
-                myPlayer = 'X';
-                
-                // Создаём комнату
-                const { error } = await supabase
-                    .from('games')
-                    .insert([{ 
-                        id: roomId, 
-                        board: board,
-                        current_player: 'X',
-                        player_x: 'active',
-                        player_o: 'waiting'
-                    }]);
-                
-                if (error) {
-                    alert('Ошибка создания комнаты: ' + error.message);
-                    return;
-                }
-                
-                // Подключаемся к реальному времени
-                setupRealtimeChannel();
-                
-                roomLink.innerText = window.location.href.split('#')[0] + '#room=' + roomId;
-                roomInfo.classList.remove('hidden');
-                statusEl.innerText = 'Комната создана. Ждём игрока O...';
-            }
-
-            async function joinRoom(roomIdToJoin) {
-                roomId = roomIdToJoin;
-                
-                // Проверяем, существует ли комната
-                const { data, error } = await supabase
-                    .from('games')
-                    .select('*')
-                    .eq('id', roomId)
-                    .single();
-                
-                if (error || !data) {
-                    alert('Комната не найдена!');
-                    roomId = null;
-                    return;
-                }
-                
-                if (data.player_o === 'active') {
-                    alert('В комнате уже есть два игрока!');
-                    roomId = null;
-                    return;
-                }
-                
-                myPlayer = 'O';
-                
-                // Обновляем статус игрока
-                await supabase
-                    .from('games')
-                    .update({ player_o: 'active' })
-                    .eq('id', roomId);
-                
-                // Подключаемся к реальному времени
-                setupRealtimeChannel();
-                
-                roomInfo.classList.remove('hidden');
-                roomLink.innerText = 'Подключено к комнате: ' + roomId;
-                statusEl.innerText = 'Ты O. Жди хода X...';
-            }
-
-            function setupRealtimeChannel() {
-                gameChannel = supabase.channel(`room:${roomId}`);
-                
-                gameChannel
-                    .on('broadcast', { event: 'MOVE' }, (payload) => {
-                        board = payload.payload.board;
-                        currentPlayer = payload.payload.nextPlayer;
-                        renderBoard();
-                    })
-                    .subscribe((status) => {
-                        console.log('Channel status:', status);
-                    });
-            }
+            // ---------- Переключение режимов ----------
+            mode2p.addEventListener('click', () => {
+                mode = '2p';
+                mode2p.classList.add('active');
+                modeBot.classList.remove('active');
+                difficultyPanel.style.display = 'flex';
+                resetGame();
+            });
+            
+            modeBot.addEventListener('click', () => {
+                mode = 'bot';
+                modeBot.classList.add('active');
+                mode2p.classList.remove('active');
+                difficultyPanel.style.display = 'flex';
+                resetGame();
+            });
+            
+            // Сложность
+            diffBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    diffBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    difficulty = btn.dataset.diff;
+                });
+            });
 
             // ---------- События ----------
             boardEl.addEventListener('click', (e) => {
@@ -380,33 +432,10 @@
                 if (index !== undefined) handleMove(parseInt(index));
             });
 
-            createRoomBtn.addEventListener('click', createRoom);
-            
-            joinRoomBtn.addEventListener('click', () => {
-                joinInput.classList.toggle('hidden');
-            });
-            
-            joinConfirmBtn.addEventListener('click', () => {
-                const code = roomIdInput.value.trim().toUpperCase();
-                if (code) joinRoom(code);
-            });
-            
-            copyLinkBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(roomLink.innerText);
-                alert('Ссылка скопирована!');
-            });
-            
             resetBtn.addEventListener('click', resetGame);
 
-            // Проверяем URL на наличие комнаты
-            const hash = window.location.hash;
-            if (hash.startsWith('#room=')) {
-                const code = hash.replace('#room=', '');
-                roomIdInput.value = code;
-                joinRoom(code);
-            }
-
-            // Локальный старт
+            // Старт
+            difficultyPanel.style.display = 'flex';
             renderBoard();
         })();
     </script>
