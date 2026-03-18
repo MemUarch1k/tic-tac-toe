@@ -40,6 +40,29 @@
             margin: 0 0 8px 0;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
         }
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 1.2rem;
+        }
+        .score-item {
+            background: #1e3a4a;
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 1px solid #2f5568;
+            box-shadow: 0 5px 0 #0b1a22;
+        }
+        .score-x {
+            color: #6ee7f7;
+        }
+        .score-o {
+            color: #ffb87c;
+        }
+        .score-draw {
+            color: #a0a0a0;
+        }
         .mode-selector {
             display: flex;
             gap: 10px;
@@ -140,6 +163,7 @@
             gap: 10px;
             margin-top: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
         .diff-btn {
             background: #152b36;
@@ -150,11 +174,34 @@
             font-size: 0.9rem;
             cursor: pointer;
             transition: 0.2s;
+            flex: 1;
         }
         .diff-btn.active {
             background: #2a5f7a;
             color: white;
             border-color: #6ee7f7;
+        }
+        .first-move {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .first-move-btn {
+            background: #1e3a4a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #0b1a22;
+            transition: 0.1s ease;
+            flex: 1;
+        }
+        .first-move-btn.active {
+            background: #31738f;
+            box-shadow: 0 3px 0 #124052;
         }
         footer {
             text-align: center;
@@ -168,23 +215,35 @@
     <div class="game-container">
         <h1>❌ крестики с ботом ⭕</h1>
         
+        <div class="scoreboard">
+            <div class="score-item"><span class="score-x">❌ X</span> <span id="scoreX">0</span></div>
+            <div class="score-item"><span class="score-draw">🤝</span> <span id="scoreDraw">0</span></div>
+            <div class="score-item"><span class="score-o">⭕ O</span> <span id="scoreO">0</span></div>
+        </div>
+        
         <div class="mode-selector">
-            <button class="mode-btn active" id="mode2p">👥 2 игрока</button>
-            <button class="mode-btn" id="modeBot">🤖 Против бота</button>
+            <button class="mode-btn" id="mode2p">👥 2 игрока</button>
+            <button class="mode-btn active" id="modeBot">🤖 Против бота</button>
         </div>
         
         <div class="difficulty-selector" id="difficultyPanel">
-            <button class="diff-btn active" data-diff="easy">🌱 Легкий</button>
-            <button class="diff-btn" data-diff="medium">🌿 Средний</button>
+            <button class="diff-btn" data-diff="easy">🌱 Легкий</button>
+            <button class="diff-btn active" data-diff="medium">🌿 Средний</button>
             <button class="diff-btn" data-diff="hard">🌲 Сложный</button>
         </div>
         
-        <div class="status" id="status">Ходит X</div>
+        <div class="first-move" id="firstMovePanel">
+            <button class="first-move-btn" data-first="player">👤 Игрок первый</button>
+            <button class="first-move-btn active" data-first="bot">🤖 Бот первый</button>
+            <button class="first-move-btn" data-first="random">🎲 Случайно</button>
+        </div>
+        
+        <div class="status" id="status">Загрузка...</div>
         
         <div class="board" id="board"></div>
         
         <button class="reset-btn" id="reset">⟳ новая игра</button>
-        <footer>⚡ играй против друга или бота</footer>
+        <footer>⚡ счёт сохраняется в браузере</footer>
     </div>
 
     <script>
@@ -193,8 +252,42 @@
             let board = ['', '', '', '', '', '', '', '', ''];
             let currentPlayer = 'X';
             let gameActive = true;
-            let mode = '2p'; // '2p' или 'bot'
-            let difficulty = 'easy'; // 'easy', 'medium', 'hard'
+            let mode = 'bot'; // '2p' или 'bot'
+            let difficulty = 'medium'; // 'easy', 'medium', 'hard'
+            let firstMove = 'bot'; // 'player', 'bot', 'random'
+            
+            // Счётчик побед
+            let scores = {
+                X: 0,
+                O: 0,
+                draw: 0
+            };
+            
+            // Загружаем счёт из localStorage
+            function loadScores() {
+                const saved = localStorage.getItem('ticTacToeScores');
+                if (saved) {
+                    try {
+                        scores = JSON.parse(saved);
+                    } catch (e) {
+                        console.log('Ошибка загрузки счёта');
+                    }
+                }
+                updateScoreDisplay();
+            }
+            
+            // Сохраняем счёт в localStorage
+            function saveScores() {
+                localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+                updateScoreDisplay();
+            }
+            
+            // Обновляем отображение счёта
+            function updateScoreDisplay() {
+                document.getElementById('scoreX').innerText = scores.X;
+                document.getElementById('scoreO').innerText = scores.O;
+                document.getElementById('scoreDraw').innerText = scores.draw;
+            }
             
             const statusEl = document.getElementById('status');
             const boardEl = document.getElementById('board');
@@ -202,13 +295,18 @@
             const modeBot = document.getElementById('modeBot');
             const resetBtn = document.getElementById('reset');
             const difficultyPanel = document.getElementById('difficultyPanel');
+            const firstMovePanel = document.getElementById('firstMovePanel');
             const diffBtns = document.querySelectorAll('.diff-btn');
+            const firstMoveBtns = document.querySelectorAll('.first-move-btn');
             
             const winPatterns = [
                 [0,1,2], [3,4,5], [6,7,8],
                 [0,3,6], [1,4,7], [2,5,8],
                 [0,4,8], [2,4,6]
             ];
+
+            // Загружаем счёт при старте
+            loadScores();
 
             // ---------- Проверка победителя ----------
             function getWinner() {
@@ -219,6 +317,22 @@
                     }
                 }
                 return board.includes('') ? null : 'draw';
+            }
+
+            // ---------- Обработка конца игры ----------
+            function handleGameEnd(winner) {
+                if (winner === 'X') {
+                    scores.X++;
+                    statusEl.innerText = '❌ X победил!';
+                } else if (winner === 'O') {
+                    scores.O++;
+                    statusEl.innerText = '⭕ O победил!';
+                } else if (winner === 'draw') {
+                    scores.draw++;
+                    statusEl.innerText = '🤝 ничья!';
+                }
+                gameActive = false;
+                saveScores();
             }
 
             // ---------- Отрисовка доски ----------
@@ -233,22 +347,15 @@
                 boardEl.innerHTML = html;
                 
                 const winner = getWinner();
-                if (winner === 'X') {
-                    statusEl.innerText = '❌ X победил!';
-                    gameActive = false;
-                } else if (winner === 'O') {
-                    statusEl.innerText = '⭕ O победил!';
-                    gameActive = false;
-                } else if (winner === 'draw') {
-                    statusEl.innerText = '🤝 ничья!';
-                    gameActive = false;
+                if (winner) {
+                    handleGameEnd(winner);
                 } else {
                     statusEl.innerText = `ходит ${currentPlayer}`;
                     gameActive = true;
                     
-                    // Если режим бота и сейчас ходит бот (O)
+                    // Если режим бота и сейчас ходит бот
                     if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
-                        setTimeout(botMove, 500); // бот думает 0.5 сек
+                        setTimeout(() => botMove(), 400);
                     }
                 }
             }
@@ -258,89 +365,27 @@
                 if (!gameActive) return;
                 if (board[index] !== '') return;
                 
-                // В режиме бота игрок всегда X
+                // В режиме бота игрок всегда X, бот O
                 if (mode === 'bot' && currentPlayer !== 'X') return;
                 
                 // Делаем ход
                 board[index] = currentPlayer;
                 
                 // Проверяем победу
-                if (getWinner()) {
-                    gameActive = false;
-                } else {
-                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                const winner = getWinner();
+                if (winner) {
+                    handleGameEnd(winner);
+                    renderBoard();
+                    return;
                 }
                 
+                // Меняем игрока
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
                 renderBoard();
             }
 
-            // ---------- Логика бота ----------
-            function botMove() {
-                if (!gameActive || currentPlayer !== 'O') return;
-                
-                let moveIndex = -1;
-                
-                // Копия доски для анализа
-                const boardCopy = [...board];
-                
-                if (difficulty === 'easy') {
-                    // Легкий: случайный ход
-                    const empty = boardCopy.reduce((acc, cell, idx) => {
-                        if (cell === '') acc.push(idx);
-                        return acc;
-                    }, []);
-                    
-                    if (empty.length > 0) {
-                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                    }
-                }
-                else if (difficulty === 'medium') {
-                    // Средний: 50% умный, 50% случайный
-                    if (Math.random() > 0.5) {
-                        moveIndex = getSmartMove(boardCopy, 'O');
-                    }
-                    
-                    if (moveIndex === -1) {
-                        const empty = boardCopy.reduce((acc, cell, idx) => {
-                            if (cell === '') acc.push(idx);
-                            return acc;
-                        }, []);
-                        if (empty.length > 0) {
-                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                        }
-                    }
-                }
-                else { // hard
-                    // Сложный: умный ход
-                    moveIndex = getSmartMove(boardCopy, 'O');
-                    
-                    // Если нет умного хода, случайный
-                    if (moveIndex === -1) {
-                        const empty = boardCopy.reduce((acc, cell, idx) => {
-                            if (cell === '') acc.push(idx);
-                            return acc;
-                        }, []);
-                        if (empty.length > 0) {
-                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                        }
-                    }
-                }
-                
-                if (moveIndex !== -1) {
-                    board[moveIndex] = 'O';
-                    
-                    if (getWinner()) {
-                        gameActive = false;
-                    } else {
-                        currentPlayer = 'X';
-                    }
-                    
-                    renderBoard();
-                }
-            }
-            
-            // Умный ход: победа/блокировка/центр/углы
-            function getSmartMove(boardArr, botSymbol) {
+            // ---------- Умный бот (почти непобедимый) ----------
+            function getBestMove(boardArr, botSymbol) {
                 const playerSymbol = botSymbol === 'O' ? 'X' : 'O';
                 
                 // 1. Проверить, может ли бот выиграть
@@ -377,7 +422,78 @@
                     return availableCorners[Math.floor(Math.random() * availableCorners.length)];
                 }
                 
-                return -1; // нет умного хода
+                // 5. Любая свободная клетка
+                const empty = boardArr.reduce((acc, cell, idx) => {
+                    if (cell === '') acc.push(idx);
+                    return acc;
+                }, []);
+                
+                return empty.length > 0 ? empty[0] : -1;
+            }
+            
+            // ---------- Ход бота ----------
+            function botMove() {
+                if (!gameActive || currentPlayer !== 'O') return;
+                
+                let moveIndex = -1;
+                const boardCopy = [...board];
+                
+                if (difficulty === 'easy') {
+                    // Легкий: случайный ход
+                    const empty = boardCopy.reduce((acc, cell, idx) => {
+                        if (cell === '') acc.push(idx);
+                        return acc;
+                    }, []);
+                    
+                    if (empty.length > 0) {
+                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                    }
+                }
+                else if (difficulty === 'medium') {
+                    // Средний: 30% умный, 70% случайный
+                    if (Math.random() < 0.3) {
+                        moveIndex = getBestMove(boardCopy, 'O');
+                    }
+                    
+                    if (moveIndex === -1) {
+                        const empty = boardCopy.reduce((acc, cell, idx) => {
+                            if (cell === '') acc.push(idx);
+                            return acc;
+                        }, []);
+                        if (empty.length > 0) {
+                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                        }
+                    }
+                }
+                else { // hard
+                    // Сложный: умный ход + немного случайности, чтобы не было скучно
+                    if (Math.random() < 0.9) {
+                        moveIndex = getBestMove(boardCopy, 'O');
+                    }
+                    
+                    if (moveIndex === -1) {
+                        const empty = boardCopy.reduce((acc, cell, idx) => {
+                            if (cell === '') acc.push(idx);
+                            return acc;
+                        }, []);
+                        if (empty.length > 0) {
+                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                        }
+                    }
+                }
+                
+                if (moveIndex !== -1 && moveIndex < 9) {
+                    board[moveIndex] = 'O';
+                    
+                    const winner = getWinner();
+                    if (winner) {
+                        handleGameEnd(winner);
+                    } else {
+                        currentPlayer = 'X';
+                    }
+                    
+                    renderBoard();
+                }
             }
             
             function checkWin(boardArr, symbol) {
@@ -393,7 +509,20 @@
             // ---------- Сброс игры ----------
             function resetGame() {
                 board = ['', '', '', '', '', '', '', '', ''];
-                currentPlayer = 'X';
+                
+                // Определяем, кто ходит первый
+                if (mode === 'bot') {
+                    if (firstMove === 'player') {
+                        currentPlayer = 'X';
+                    } else if (firstMove === 'bot') {
+                        currentPlayer = 'O';
+                    } else { // random
+                        currentPlayer = Math.random() < 0.5 ? 'X' : 'O';
+                    }
+                } else {
+                    currentPlayer = 'X'; // в режиме 2 игроков всегда X первый
+                }
+                
                 gameActive = true;
                 renderBoard();
             }
@@ -404,6 +533,7 @@
                 mode2p.classList.add('active');
                 modeBot.classList.remove('active');
                 difficultyPanel.style.display = 'flex';
+                firstMovePanel.style.display = 'none';
                 resetGame();
             });
             
@@ -412,6 +542,7 @@
                 modeBot.classList.add('active');
                 mode2p.classList.remove('active');
                 difficultyPanel.style.display = 'flex';
+                firstMovePanel.style.display = 'flex';
                 resetGame();
             });
             
@@ -421,6 +552,15 @@
                     diffBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     difficulty = btn.dataset.diff;
+                });
+            });
+            
+            // Кто первый ходит
+            firstMoveBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    firstMoveBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    firstMove = btn.dataset.first;
                 });
             });
 
@@ -436,7 +576,8 @@
 
             // Старт
             difficultyPanel.style.display = 'flex';
-            renderBoard();
+            firstMovePanel.style.display = 'flex';
+            resetGame();
         })();
     </script>
 </body>
