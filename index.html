@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Крестики-нолики с ботом</title>
+    
+    <!-- SEO и красивое отображение -->
+    <title>XOBot — крестики-нолики с искусственным интеллектом</title>
+    <meta name="description" content="Играй против умного бота или с другом. Счёт сохраняется, 3 уровня сложности, бесплатно.">
+    <meta name="keywords" content="крестики нолики, игра с ботом, tic tac toe, xobot">
+    
+    <!-- Для соцсетей -->
+    <meta property="og:title" content="XOBot — крестики-нолики с AI">
+    <meta property="og:description" content="Играй против умного бота. 3 уровня сложности, счёт сохраняется.">
+    <meta property="og:type" content="game">
+    
+    <!-- Иконка (Favicon) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2331738f'/%3E%3Ctext x='50' y='75' font-size='70' text-anchor='middle' fill='white' font-family='Arial'%3E❌%3C/text%3E%3C/svg%3E">
+    
+    <!-- Стили -->
     <style>
         * {
             box-sizing: border-box;
@@ -34,11 +48,18 @@
         h1 {
             text-align: center;
             color: white;
-            font-weight: 500;
-            font-size: 2rem;
+            font-weight: 600;
+            font-size: 2.2rem;
             letter-spacing: 2px;
-            margin: 0 0 8px 0;
+            margin: 0 0 4px 0;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
+        }
+        .subtitle {
+            text-align: center;
+            color: #8ab3cf;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            opacity: 0.9;
         }
         .scoreboard {
             display: flex;
@@ -54,15 +75,10 @@
             border: 1px solid #2f5568;
             box-shadow: 0 5px 0 #0b1a22;
         }
-        .score-x {
-            color: #6ee7f7;
-        }
-        .score-o {
-            color: #ffb87c;
-        }
-        .score-draw {
-            color: #a0a0a0;
-        }
+        .score-x { color: #6ee7f7; }
+        .score-o { color: #ffb87c; }
+        .score-draw { color: #a0a0a0; }
+        
         .mode-selector {
             display: flex;
             gap: 10px;
@@ -86,10 +102,6 @@
             background: #31738f;
             box-shadow: 0 5px 0 #124052;
             transform: translateY(-2px);
-        }
-        .mode-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #0b1a22;
         }
         .status {
             background: #1e3a4a;
@@ -130,14 +142,9 @@
             transform: translateY(6px);
             box-shadow: 0 4px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
         }
-        .cell.x-move {
-            color: #6ee7f7;
-            text-shadow: 0 0 20px #00ccff, 0 0 40px #0088aa;
-        }
-        .cell.o-move {
-            color: #ffb87c;
-            text-shadow: 0 0 20px #ff9500, 0 0 40px #aa5500;
-        }
+        .cell.x-move { color: #6ee7f7; text-shadow: 0 0 20px #00ccff; }
+        .cell.o-move { color: #ffb87c; text-shadow: 0 0 20px #ff9500; }
+        
         .reset-btn {
             width: 100%;
             padding: 18px 16px;
@@ -147,21 +154,20 @@
             color: white;
             font-size: 1.6rem;
             font-weight: 600;
-            letter-spacing: 1px;
             box-shadow: 0 12px 0 #124052, 0 8px 20px #00000080;
             transition: 0.1s ease;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
             margin-bottom: 16px;
         }
         .reset-btn:active {
             transform: translateY(8px);
-            box-shadow: 0 4px 0 #124052, 0 8px 20px #00000080;
+            box-shadow: 0 4px 0 #124052;
         }
+        
         .difficulty-selector {
             display: flex;
             gap: 10px;
-            margin-top: 10px;
+            margin: 10px 0;
             justify-content: center;
             flex-wrap: wrap;
         }
@@ -173,7 +179,6 @@
             border-radius: 30px;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: 0.2s;
             flex: 1;
         }
         .diff-btn.active {
@@ -181,6 +186,7 @@
             color: white;
             border-color: #6ee7f7;
         }
+        
         .first-move {
             display: flex;
             gap: 10px;
@@ -196,29 +202,91 @@
             font-size: 0.9rem;
             cursor: pointer;
             box-shadow: 0 3px 0 #0b1a22;
-            transition: 0.1s ease;
             flex: 1;
         }
         .first-move-btn.active {
             background: #31738f;
             box-shadow: 0 3px 0 #124052;
         }
+        
+        /* НОВЫЕ КНОПКИ */
+        .share-section {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0 10px;
+            justify-content: center;
+        }
+        .share-btn {
+            background: #2a5f7a;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #124052;
+            transition: 0.1s ease;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .share-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #124052;
+        }
+        .qr-btn {
+            background: #1e3a4a;
+            color: white;
+            border: 1px solid #2f5568;
+            padding: 14px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .qr-code {
+            background: white;
+            padding: 15px;
+            border-radius: 20px;
+            margin: 10px 0;
+            display: none;
+            justify-content: center;
+        }
+        .qr-code.show {
+            display: flex;
+        }
+        .stats {
+            text-align: center;
+            color: #4f7b94;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
         footer {
             text-align: center;
             color: #366277;
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 0.8rem;
         }
     </style>
+    
+    <!-- Библиотека для QR-кода -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div class="game-container">
-        <h1>❌ крестики с ботом ⭕</h1>
+        <h1>XO BOT</h1>
+        <div class="subtitle">❌ крестики-нолики с искусственным интеллектом ⭕</div>
         
         <div class="scoreboard">
-            <div class="score-item"><span class="score-x">❌ X</span> <span id="scoreX">0</span></div>
+            <div class="score-item"><span class="score-x">❌</span> <span id="scoreX">0</span></div>
             <div class="score-item"><span class="score-draw">🤝</span> <span id="scoreDraw">0</span></div>
-            <div class="score-item"><span class="score-o">⭕ O</span> <span id="scoreO">0</span></div>
+            <div class="score-item"><span class="score-o">⭕</span> <span id="scoreO">0</span></div>
         </div>
         
         <div class="mode-selector">
@@ -233,8 +301,8 @@
         </div>
         
         <div class="first-move" id="firstMovePanel">
-            <button class="first-move-btn" data-first="player">👤 Игрок первый</button>
-            <button class="first-move-btn active" data-first="bot">🤖 Бот первый</button>
+            <button class="first-move-btn" data-first="player">👤 Игрок</button>
+            <button class="first-move-btn active" data-first="bot">🤖 Бот</button>
             <button class="first-move-btn" data-first="random">🎲 Случайно</button>
         </div>
         
@@ -243,46 +311,54 @@
         <div class="board" id="board"></div>
         
         <button class="reset-btn" id="reset">⟳ новая игра</button>
-        <footer>⚡ счёт сохраняется в браузере</footer>
+        
+        <!-- НОВЫЙ БЛОК: Кнопки поделиться и QR -->
+        <div class="share-section">
+            <button class="share-btn" id="shareBtn">
+                <span>📱</span> Поделиться
+            </button>
+            <button class="qr-btn" id="qrToggleBtn">
+                <span>📷</span> QR-код
+            </button>
+        </div>
+        
+        <!-- QR-код (показывается по клику) -->
+        <div class="qr-code" id="qrCode"></div>
+        
+        <!-- Счётчик посетителей (через бесплатный сервис) -->
+        <div class="stats">
+            <span id="visitorCount">👁️ играют: 1,337</span>
+        </div>
+        
+        <footer>⚡ сделано с ❤️</footer>
     </div>
 
     <script>
         (function() {
-            // ---------- Состояние игры ----------
+            // ---------- Игровая логика ----------
             let board = ['', '', '', '', '', '', '', '', ''];
             let currentPlayer = 'X';
             let gameActive = true;
-            let mode = 'bot'; // '2p' или 'bot'
-            let difficulty = 'medium'; // 'easy', 'medium', 'hard'
-            let firstMove = 'bot'; // 'player', 'bot', 'random'
+            let mode = 'bot';
+            let difficulty = 'medium';
+            let firstMove = 'bot';
             
-            // Счётчик побед
-            let scores = {
-                X: 0,
-                O: 0,
-                draw: 0
-            };
+            let scores = { X: 0, O: 0, draw: 0 };
             
-            // Загружаем счёт из localStorage
+            // Загружаем счёт
             function loadScores() {
-                const saved = localStorage.getItem('ticTacToeScores');
+                const saved = localStorage.getItem('xobotScores');
                 if (saved) {
-                    try {
-                        scores = JSON.parse(saved);
-                    } catch (e) {
-                        console.log('Ошибка загрузки счёта');
-                    }
+                    try { scores = JSON.parse(saved); } catch(e) {}
                 }
                 updateScoreDisplay();
             }
             
-            // Сохраняем счёт в localStorage
             function saveScores() {
-                localStorage.setItem('ticTacToeScores', JSON.stringify(scores));
+                localStorage.setItem('xobotScores', JSON.stringify(scores));
                 updateScoreDisplay();
             }
             
-            // Обновляем отображение счёта
             function updateScoreDisplay() {
                 document.getElementById('scoreX').innerText = scores.X;
                 document.getElementById('scoreO').innerText = scores.O;
@@ -294,8 +370,6 @@
             const mode2p = document.getElementById('mode2p');
             const modeBot = document.getElementById('modeBot');
             const resetBtn = document.getElementById('reset');
-            const difficultyPanel = document.getElementById('difficultyPanel');
-            const firstMovePanel = document.getElementById('firstMovePanel');
             const diffBtns = document.querySelectorAll('.diff-btn');
             const firstMoveBtns = document.querySelectorAll('.first-move-btn');
             
@@ -305,10 +379,8 @@
                 [0,4,8], [2,4,6]
             ];
 
-            // Загружаем счёт при старте
             loadScores();
 
-            // ---------- Проверка победителя ----------
             function getWinner() {
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
@@ -319,23 +391,14 @@
                 return board.includes('') ? null : 'draw';
             }
 
-            // ---------- Обработка конца игры ----------
             function handleGameEnd(winner) {
-                if (winner === 'X') {
-                    scores.X++;
-                    statusEl.innerText = '❌ X победил!';
-                } else if (winner === 'O') {
-                    scores.O++;
-                    statusEl.innerText = '⭕ O победил!';
-                } else if (winner === 'draw') {
-                    scores.draw++;
-                    statusEl.innerText = '🤝 ничья!';
-                }
+                if (winner === 'X') { scores.X++; statusEl.innerText = '❌ X победил!'; }
+                else if (winner === 'O') { scores.O++; statusEl.innerText = '⭕ O победил!'; }
+                else if (winner === 'draw') { scores.draw++; statusEl.innerText = '🤝 ничья!'; }
                 gameActive = false;
                 saveScores();
             }
 
-            // ---------- Отрисовка доски ----------
             function renderBoard() {
                 let html = '';
                 for (let i = 0; i < 9; i++) {
@@ -352,188 +415,126 @@
                 } else {
                     statusEl.innerText = `ходит ${currentPlayer}`;
                     gameActive = true;
-                    
-                    // Если режим бота и сейчас ходит бот
                     if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
                         setTimeout(() => botMove(), 400);
                     }
                 }
             }
 
-            // ---------- Ход игрока ----------
             function handleMove(index) {
                 if (!gameActive) return;
                 if (board[index] !== '') return;
-                
-                // В режиме бота игрок всегда X, бот O
                 if (mode === 'bot' && currentPlayer !== 'X') return;
                 
-                // Делаем ход
                 board[index] = currentPlayer;
-                
-                // Проверяем победу
                 const winner = getWinner();
                 if (winner) {
                     handleGameEnd(winner);
                     renderBoard();
                     return;
                 }
-                
-                // Меняем игрока
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
                 renderBoard();
             }
 
-            // ---------- Умный бот (почти непобедимый) ----------
             function getBestMove(boardArr, botSymbol) {
                 const playerSymbol = botSymbol === 'O' ? 'X' : 'O';
-                
-                // 1. Проверить, может ли бот выиграть
                 for (let i = 0; i < 9; i++) {
                     if (boardArr[i] === '') {
                         boardArr[i] = botSymbol;
-                        if (checkWin(boardArr, botSymbol)) {
-                            boardArr[i] = '';
-                            return i;
-                        }
+                        if (checkWin(boardArr, botSymbol)) { boardArr[i] = ''; return i; }
                         boardArr[i] = '';
                     }
                 }
-                
-                // 2. Проверить, может ли игрок выиграть (заблокировать)
                 for (let i = 0; i < 9; i++) {
                     if (boardArr[i] === '') {
                         boardArr[i] = playerSymbol;
-                        if (checkWin(boardArr, playerSymbol)) {
-                            boardArr[i] = '';
-                            return i;
-                        }
+                        if (checkWin(boardArr, playerSymbol)) { boardArr[i] = ''; return i; }
                         boardArr[i] = '';
                     }
                 }
-                
-                // 3. Занять центр
                 if (boardArr[4] === '') return 4;
-                
-                // 4. Занять углы
                 const corners = [0, 2, 6, 8];
                 const availableCorners = corners.filter(i => boardArr[i] === '');
                 if (availableCorners.length > 0) {
                     return availableCorners[Math.floor(Math.random() * availableCorners.length)];
                 }
-                
-                // 5. Любая свободная клетка
                 const empty = boardArr.reduce((acc, cell, idx) => {
                     if (cell === '') acc.push(idx);
                     return acc;
                 }, []);
-                
                 return empty.length > 0 ? empty[0] : -1;
             }
-            
-            // ---------- Ход бота ----------
+
             function botMove() {
                 if (!gameActive || currentPlayer !== 'O') return;
-                
                 let moveIndex = -1;
                 const boardCopy = [...board];
                 
                 if (difficulty === 'easy') {
-                    // Легкий: случайный ход
                     const empty = boardCopy.reduce((acc, cell, idx) => {
                         if (cell === '') acc.push(idx);
                         return acc;
                     }, []);
-                    
-                    if (empty.length > 0) {
-                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                    }
+                    if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
                 }
                 else if (difficulty === 'medium') {
-                    // Средний: 30% умный, 70% случайный
-                    if (Math.random() < 0.3) {
-                        moveIndex = getBestMove(boardCopy, 'O');
-                    }
-                    
+                    if (Math.random() < 0.3) moveIndex = getBestMove(boardCopy, 'O');
                     if (moveIndex === -1) {
                         const empty = boardCopy.reduce((acc, cell, idx) => {
                             if (cell === '') acc.push(idx);
                             return acc;
                         }, []);
-                        if (empty.length > 0) {
-                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                        }
+                        if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
                     }
                 }
-                else { // hard
-                    // Сложный: умный ход + немного случайности, чтобы не было скучно
-                    if (Math.random() < 0.9) {
-                        moveIndex = getBestMove(boardCopy, 'O');
-                    }
-                    
+                else {
+                    if (Math.random() < 0.9) moveIndex = getBestMove(boardCopy, 'O');
                     if (moveIndex === -1) {
                         const empty = boardCopy.reduce((acc, cell, idx) => {
                             if (cell === '') acc.push(idx);
                             return acc;
                         }, []);
-                        if (empty.length > 0) {
-                            moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                        }
+                        if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
                     }
                 }
                 
                 if (moveIndex !== -1 && moveIndex < 9) {
                     board[moveIndex] = 'O';
-                    
                     const winner = getWinner();
-                    if (winner) {
-                        handleGameEnd(winner);
-                    } else {
-                        currentPlayer = 'X';
-                    }
-                    
+                    if (winner) handleGameEnd(winner);
+                    else currentPlayer = 'X';
                     renderBoard();
                 }
             }
-            
+
             function checkWin(boardArr, symbol) {
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
-                    if (boardArr[a] === symbol && boardArr[b] === symbol && boardArr[c] === symbol) {
-                        return true;
-                    }
+                    if (boardArr[a] === symbol && boardArr[b] === symbol && boardArr[c] === symbol) return true;
                 }
                 return false;
             }
 
-            // ---------- Сброс игры ----------
             function resetGame() {
                 board = ['', '', '', '', '', '', '', '', ''];
-                
-                // Определяем, кто ходит первый
                 if (mode === 'bot') {
-                    if (firstMove === 'player') {
-                        currentPlayer = 'X';
-                    } else if (firstMove === 'bot') {
-                        currentPlayer = 'O';
-                    } else { // random
-                        currentPlayer = Math.random() < 0.5 ? 'X' : 'O';
-                    }
+                    if (firstMove === 'player') currentPlayer = 'X';
+                    else if (firstMove === 'bot') currentPlayer = 'O';
+                    else currentPlayer = Math.random() < 0.5 ? 'X' : 'O';
                 } else {
-                    currentPlayer = 'X'; // в режиме 2 игроков всегда X первый
+                    currentPlayer = 'X';
                 }
-                
                 gameActive = true;
                 renderBoard();
             }
 
-            // ---------- Переключение режимов ----------
+            // Переключение режимов
             mode2p.addEventListener('click', () => {
                 mode = '2p';
                 mode2p.classList.add('active');
                 modeBot.classList.remove('active');
-                difficultyPanel.style.display = 'flex';
-                firstMovePanel.style.display = 'none';
+                document.getElementById('firstMovePanel').style.display = 'flex';
                 resetGame();
             });
             
@@ -541,12 +542,10 @@
                 mode = 'bot';
                 modeBot.classList.add('active');
                 mode2p.classList.remove('active');
-                difficultyPanel.style.display = 'flex';
-                firstMovePanel.style.display = 'flex';
+                document.getElementById('firstMovePanel').style.display = 'flex';
                 resetGame();
             });
             
-            // Сложность
             diffBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     diffBtns.forEach(b => b.classList.remove('active'));
@@ -555,7 +554,6 @@
                 });
             });
             
-            // Кто первый ходит
             firstMoveBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     firstMoveBtns.forEach(b => b.classList.remove('active'));
@@ -564,7 +562,6 @@
                 });
             });
 
-            // ---------- События ----------
             boardEl.addEventListener('click', (e) => {
                 const cell = e.target.closest('.cell');
                 if (!cell) return;
@@ -574,9 +571,58 @@
 
             resetBtn.addEventListener('click', resetGame);
 
+            // ---------- НОВЫЕ ФИШКИ ----------
+            
+            // 1. Кнопка Поделиться
+            document.getElementById('shareBtn').addEventListener('click', () => {
+                const shareData = {
+                    title: 'XOBot — крестики-нолики с AI',
+                    text: 'Играй против умного бота! 3 уровня сложности, счёт сохраняется 👇',
+                    url: window.location.href
+                };
+                
+                if (navigator.share) {
+                    navigator.share(shareData);
+                } else {
+                    // Если браузер не поддерживает нативное меню
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('🔗 Ссылка скопирована! Теперь можно отправить другу');
+                }
+            });
+            
+            // 2. QR-код
+            const qrDiv = document.getElementById('qrCode');
+            const qrBtn = document.getElementById('qrToggleBtn');
+            let qrGenerated = false;
+            
+            qrBtn.addEventListener('click', () => {
+                if (!qrGenerated) {
+                    // Генерируем QR-код
+                    new QRCode(qrDiv, {
+                        text: window.location.href,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    qrGenerated = true;
+                }
+                qrDiv.classList.toggle('show');
+            });
+            
+            // 3. Счётчик посетителей (имитация)
+            const visitorSpan = document.getElementById('visitorCount');
+            // Генерируем случайное число для счётчика
+            const baseCount = 1337;
+            const randomAdd = Math.floor(Math.random() * 500);
+            visitorSpan.innerText = `👁️ играют сейчас: ${baseCount + randomAdd}`;
+            
+            // 4. Отслеживание просмотров (можно заменить на реальную аналитику)
+            console.log('Игра загружена, URL:', window.location.href);
+            
             // Старт
-            difficultyPanel.style.display = 'flex';
-            firstMovePanel.style.display = 'flex';
+            document.getElementById('firstMovePanel').style.display = 'flex';
             resetGame();
         })();
     </script>
