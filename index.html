@@ -3,13 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <title>XOBot — крестики-нолики с ИИ</title>
-    <meta name="description" content="Играй против умного бота. 3 уровня сложности, счёт сохраняется, реальный онлайн.">
-    
-    <!-- Для Яндекс.Игр -->
-    <script src="https://yandex.ru/games/sdk/v2"></script>
-    
+    <title>Memuar's Tic-Tac-Toe</title>
     <style>
         * {
             box-sizing: border-box;
@@ -41,7 +35,7 @@
             text-align: center;
             color: white;
             font-weight: 600;
-            font-size: 2.2rem;
+            font-size: 2rem;
             letter-spacing: 2px;
             margin: 0 0 4px 0;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
@@ -49,18 +43,8 @@
         .subtitle {
             text-align: center;
             color: #8ab3cf;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             margin-bottom: 16px;
-        }
-        .online-counter {
-            background: #152b36;
-            color: #6ee7f7;
-            text-align: center;
-            padding: 8px;
-            border-radius: 40px;
-            margin-bottom: 16px;
-            font-size: 1rem;
-            border: 1px solid #2f5568;
         }
         .scoreboard {
             display: flex;
@@ -252,16 +236,12 @@
             font-size: 0.8rem;
         }
     </style>
-    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div class="game-container">
-        <h1>XO BOT</h1>
-        <div class="subtitle">❌ крестики-нолики с искусственным интеллектом ⭕</div>
-        
-        <!-- РЕАЛЬНЫЙ СЧЁТЧИК ОНЛАЙН -->
-        <div class="online-counter" id="onlineCounter">👁️ загрузка...</div>
+        <h1>Memuar's Tic-Tac-Toe</h1>
+        <div class="subtitle">❌ крестики-нолики с умным ботом ⭕</div>
         
         <div class="scoreboard">
             <div class="score-item"><span class="score-x">❌</span> <span id="scoreX">0</span></div>
@@ -299,50 +279,12 @@
         
         <div class="qr-code" id="qrCode"></div>
         
-        <footer>⚡ игра с реальным онлайном</footer>
+        <footer>⚡ Memuar's Games © 2026</footer>
     </div>
 
     <script>
         (function() {
-            // ---------- Яндекс SDK ----------
-            let ysdk = null;
-            let player = null;
-            
-            // ---------- Реальный онлайн ----------
-            let onlineCount = 1;
-            const onlineEl = document.getElementById('onlineCounter');
-            
-            // Загружаем Яндекс SDK
-            YaGames.init().then(sdk => {
-                ysdk = sdk;
-                player = ysdk.getPlayer();
-                
-                // Показываем рекламу не чаще раза в 5 минут (для монетизации)
-                ysdk.features.LoadingAPI?.ready();
-                
-                // Получаем/обновляем онлайн через облако (эмуляция)
-                updateOnlineCount();
-            }).catch(e => {
-                console.log('Яндекс SDK не загружен (игра вне Яндекс.Игр)');
-                // Эмулируем онлайн для GitHub версии
-                setInterval(() => {
-                    onlineCount = 1 + Math.floor(Math.random() * 5);
-                    onlineEl.innerText = `👁️ онлайн: ${onlineCount}`;
-                }, 5000);
-            });
-            
-            // Функция обновления онлайна (реальная)
-            function updateOnlineCount() {
-                if (ysdk) {
-                    // В реальности тут будет запрос к серверу
-                    // Пока эмулируем рост
-                    onlineCount = 1 + Math.floor(Math.random() * 10);
-                    onlineEl.innerText = `👁️ онлайн: ${onlineCount}`;
-                }
-                setTimeout(updateOnlineCount, 10000);
-            }
-
-            // ---------- Игровая логика ----------
+            // ---------- Состояние ----------
             let board = ['', '', '', '', '', '', '', '', ''];
             let currentPlayer = 'X';
             let gameActive = true;
@@ -352,32 +294,7 @@
             
             let scores = { X: 0, O: 0, draw: 0 };
             
-            function loadScores() {
-                const saved = localStorage.getItem('xobotScores');
-                if (saved) {
-                    try { scores = JSON.parse(saved); } catch(e) {}
-                }
-                updateScoreDisplay();
-            }
-            
-            function saveScores() {
-                localStorage.setItem('xobotScores', JSON.stringify(scores));
-                updateScoreDisplay();
-                
-                // Отправляем достижение в Яндекс (если есть)
-                if (ysdk && player) {
-                    if (scores.X >= 10) {
-                        player.setStats({ wins: scores.X });
-                    }
-                }
-            }
-            
-            function updateScoreDisplay() {
-                document.getElementById('scoreX').innerText = scores.X;
-                document.getElementById('scoreO').innerText = scores.O;
-                document.getElementById('scoreDraw').innerText = scores.draw;
-            }
-            
+            // DOM элементы
             const statusEl = document.getElementById('status');
             const boardEl = document.getElementById('board');
             const mode2p = document.getElementById('mode2p');
@@ -392,44 +309,59 @@
                 [0,4,8], [2,4,6]
             ];
 
-            loadScores();
+            // Загрузка счёта
+            function loadScores() {
+                const saved = localStorage.getItem('memuarTicTacToe');
+                if (saved) {
+                    try { scores = JSON.parse(saved); } catch(e) {}
+                }
+                updateScoreDisplay();
+            }
+            
+            function saveScores() {
+                localStorage.setItem('memuarTicTacToe', JSON.stringify(scores));
+                updateScoreDisplay();
+            }
+            
+            function updateScoreDisplay() {
+                document.getElementById('scoreX').innerText = scores.X;
+                document.getElementById('scoreO').innerText = scores.O;
+                document.getElementById('scoreDraw').innerText = scores.draw;
+            }
 
-           function getWinner() {
-    console.log('Проверка победителя, текущая доска:', board);
+            // Проверка победителя
+            function checkWinner() {
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
                     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
                         return board[a];
                     }
                 }
-                return board.includes('') ? null : 'draw';
+                if (board.includes('')) return null;
+                return 'draw';
             }
 
-           function handleGameEnd(winner) {
-    console.log('handleGameEnd вызван с winner =', winner);
-    console.log('Текущие очки ДО:', scores);
-    
-    if (winner === 'X') { 
-        scores.X++; 
-        statusEl.innerText = `❌ X победил!`; 
-        console.log('Добавлено очко X');
-    }
-    else if (winner === 'O') { 
-        scores.O++; 
-        statusEl.innerText = `⭕ O победил!`; 
-        console.log('Добавлено очко O');
-    }
-    else if (winner === 'draw') { 
-        scores.draw++; 
-        statusEl.innerText = `🤝 Ничья!`; 
-        console.log('Добавлено очко ничьей');
-    }
-    
-    gameActive = false;
-    saveScores();
-    console.log('Очки ПОСЛЕ:', scores);
-}
+            // Конец игры
+            function endGame(winner) {
+                if (!gameActive) return;
+                
+                gameActive = false;
+                
+                if (winner === 'X') {
+                    scores.X++;
+                    statusEl.innerText = '❌ X победил!';
+                } else if (winner === 'O') {
+                    scores.O++;
+                    statusEl.innerText = '⭕ O победил!';
+                } else if (winner === 'draw') {
+                    scores.draw++;
+                    statusEl.innerText = '🤝 ничья!';
+                }
+                
+                saveScores();
+            }
 
+            // Отрисовка
             function renderBoard() {
                 let html = '';
                 for (let i = 0; i < 9; i++) {
@@ -439,116 +371,134 @@
                     html += `<div class="${cellClass}" data-index="${i}">${board[i]}</div>`;
                 }
                 boardEl.innerHTML = html;
+            }
+
+            // Обновление статуса
+            function updateStatus() {
+                const winner = checkWinner();
                 
-                const winner = getWinner();
                 if (winner) {
-                    handleGameEnd(winner);
+                    endGame(winner);
                 } else {
                     statusEl.innerText = `ходит ${currentPlayer}`;
-                    gameActive = true;
+                    
                     if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
-                        setTimeout(() => botMove(), 400);
+                        setTimeout(() => botMove(), 300);
                     }
                 }
             }
 
+            // Ход игрока
             function handleMove(index) {
                 if (!gameActive) return;
                 if (board[index] !== '') return;
                 if (mode === 'bot' && currentPlayer !== 'X') return;
                 
                 board[index] = currentPlayer;
-                const winner = getWinner();
+                renderBoard();
+                
+                const winner = checkWinner();
                 if (winner) {
-                    handleGameEnd(winner);
+                    endGame(winner);
                     renderBoard();
                     return;
                 }
+                
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-                renderBoard();
+                updateStatus();
             }
 
-            function getBestMove(boardArr, botSymbol) {
-                const playerSymbol = botSymbol === 'O' ? 'X' : 'O';
+            // Умный ход для бота
+            function getBestMove() {
+                // Победа
                 for (let i = 0; i < 9; i++) {
-                    if (boardArr[i] === '') {
-                        boardArr[i] = botSymbol;
-                        if (checkWin(boardArr, botSymbol)) { boardArr[i] = ''; return i; }
-                        boardArr[i] = '';
+                    if (board[i] === '') {
+                        board[i] = 'O';
+                        if (checkWinner() === 'O') {
+                            board[i] = '';
+                            return i;
+                        }
+                        board[i] = '';
                     }
                 }
+                
+                // Блокировка победы игрока
                 for (let i = 0; i < 9; i++) {
-                    if (boardArr[i] === '') {
-                        boardArr[i] = playerSymbol;
-                        if (checkWin(boardArr, playerSymbol)) { boardArr[i] = ''; return i; }
-                        boardArr[i] = '';
+                    if (board[i] === '') {
+                        board[i] = 'X';
+                        if (checkWinner() === 'X') {
+                            board[i] = '';
+                            return i;
+                        }
+                        board[i] = '';
                     }
                 }
-                if (boardArr[4] === '') return 4;
+                
+                // Центр
+                if (board[4] === '') return 4;
+                
+                // Углы
                 const corners = [0, 2, 6, 8];
-                const availableCorners = corners.filter(i => boardArr[i] === '');
-                if (availableCorners.length > 0) {
-                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                for (let i of corners) {
+                    if (board[i] === '') return i;
                 }
-                const empty = boardArr.reduce((acc, cell, idx) => {
-                    if (cell === '') acc.push(idx);
-                    return acc;
-                }, []);
-                return empty.length > 0 ? empty[0] : -1;
+                
+                // Остальное
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') return i;
+                }
+                
+                return -1;
             }
 
+            // Ход бота
             function botMove() {
                 if (!gameActive || currentPlayer !== 'O') return;
-                let moveIndex = -1;
-                const boardCopy = [...board];
+                
+                let moveIndex;
                 
                 if (difficulty === 'easy') {
-                    const empty = boardCopy.reduce((acc, cell, idx) => {
+                    const empty = board.reduce((acc, cell, idx) => {
                         if (cell === '') acc.push(idx);
                         return acc;
                     }, []);
-                    if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                }
+                    moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                } 
                 else if (difficulty === 'medium') {
-                    if (Math.random() < 0.3) moveIndex = getBestMove(boardCopy, 'O');
-                    if (moveIndex === -1) {
-                        const empty = boardCopy.reduce((acc, cell, idx) => {
+                    if (Math.random() < 0.4) {
+                        moveIndex = getBestMove();
+                    } else {
+                        const empty = board.reduce((acc, cell, idx) => {
                             if (cell === '') acc.push(idx);
                             return acc;
                         }, []);
-                        if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
                     }
-                }
+                } 
                 else {
-                    if (Math.random() < 0.9) moveIndex = getBestMove(boardCopy, 'O');
-                    if (moveIndex === -1) {
-                        const empty = boardCopy.reduce((acc, cell, idx) => {
-                            if (cell === '') acc.push(idx);
-                            return acc;
-                        }, []);
-                        if (empty.length > 0) moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                    }
+                    moveIndex = getBestMove();
                 }
                 
-                if (moveIndex !== -1 && moveIndex < 9) {
+                if (moveIndex !== undefined && moveIndex !== -1) {
                     board[moveIndex] = 'O';
-                    const winner = getWinner();
-                    if (winner) handleGameEnd(winner);
-                    else currentPlayer = 'X';
                     renderBoard();
+                    
+                    const winner = checkWinner();
+                    if (winner) {
+                        endGame(winner);
+                        renderBoard();
+                        return;
+                    }
+                    
+                    currentPlayer = 'X';
+                    updateStatus();
                 }
             }
 
-            function checkWin(boardArr, symbol) {
-                for (let p of winPatterns) {
-                    const [a,b,c] = p;
-                    if (boardArr[a] === symbol && boardArr[b] === symbol && boardArr[c] === symbol) return true;
-                }
-                return false;
-            }
-
+            // Сброс игры
             function resetGame() {
                 board = ['', '', '', '', '', '', '', '', ''];
+                
                 if (mode === 'bot') {
                     if (firstMove === 'player') currentPlayer = 'X';
                     else if (firstMove === 'bot') currentPlayer = 'O';
@@ -556,20 +506,24 @@
                 } else {
                     currentPlayer = 'X';
                 }
+                
                 gameActive = true;
                 renderBoard();
-                
-                // Показываем рекламу при новой игре (но не чаще)
-                if (ysdk && Math.random() < 0.3) {
-                    ysdk.adv.showFullscreenAdv();
-                }
+                updateStatus();
             }
+
+            // ---------- События ----------
+            boardEl.addEventListener('click', (e) => {
+                const cell = e.target.closest('.cell');
+                if (!cell) return;
+                const index = cell.dataset.index;
+                if (index !== undefined) handleMove(parseInt(index));
+            });
 
             mode2p.addEventListener('click', () => {
                 mode = '2p';
                 mode2p.classList.add('active');
                 modeBot.classList.remove('active');
-                document.getElementById('firstMovePanel').style.display = 'flex';
                 resetGame();
             });
             
@@ -577,7 +531,6 @@
                 mode = 'bot';
                 modeBot.classList.add('active');
                 mode2p.classList.remove('active');
-                document.getElementById('firstMovePanel').style.display = 'flex';
                 resetGame();
             });
             
@@ -597,25 +550,16 @@
                 });
             });
 
-            boardEl.addEventListener('click', (e) => {
-                const cell = e.target.closest('.cell');
-                if (!cell) return;
-                const index = cell.dataset.index;
-                if (index !== undefined) handleMove(parseInt(index));
-            });
-
             resetBtn.addEventListener('click', resetGame);
 
             // ---------- Кнопки поделиться и QR ----------
             document.getElementById('shareBtn').addEventListener('click', () => {
-                const shareData = {
-                    title: 'XOBot — крестики-нолики с AI',
-                    text: 'Играй против умного бота! 3 уровня сложности, счёт сохраняется 👇',
-                    url: window.location.href
-                };
-                
                 if (navigator.share) {
-                    navigator.share(shareData);
+                    navigator.share({
+                        title: 'Memuar\'s Tic-Tac-Toe',
+                        text: 'Играй против умного бота!',
+                        url: window.location.href
+                    });
                 } else {
                     navigator.clipboard.writeText(window.location.href);
                     alert('🔗 Ссылка скопирована!');
@@ -631,16 +575,15 @@
                     new QRCode(qrDiv, {
                         text: window.location.href,
                         width: 200,
-                        height: 200,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff"
+                        height: 200
                     });
                     qrGenerated = true;
                 }
                 qrDiv.classList.toggle('show');
             });
 
-            document.getElementById('firstMovePanel').style.display = 'flex';
+            // Загрузка счёта и старт
+            loadScores();
             resetGame();
         })();
     </script>
