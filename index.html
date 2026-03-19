@@ -394,7 +394,8 @@
 
             loadScores();
 
-            function getWinner() {
+           function getWinner() {
+    console.log('Проверка победителя, текущая доска:', board);
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
                     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
@@ -404,13 +405,30 @@
                 return board.includes('') ? null : 'draw';
             }
 
-            function handleGameEnd(winner) {
-                if (winner === 'X') { scores.X++; statusEl.innerText = '❌ X победил!'; }
-                else if (winner === 'O') { scores.O++; statusEl.innerText = '⭕ O победил!'; }
-                else if (winner === 'draw') { scores.draw++; statusEl.innerText = '🤝 ничья!'; }
-                gameActive = false;
-                saveScores();
-            }
+           function handleGameEnd(winner) {
+    console.log('handleGameEnd вызван с winner =', winner);
+    console.log('Текущие очки ДО:', scores);
+    
+    if (winner === 'X') { 
+        scores.X++; 
+        statusEl.innerText = `❌ X победил!`; 
+        console.log('Добавлено очко X');
+    }
+    else if (winner === 'O') { 
+        scores.O++; 
+        statusEl.innerText = `⭕ O победил!`; 
+        console.log('Добавлено очко O');
+    }
+    else if (winner === 'draw') { 
+        scores.draw++; 
+        statusEl.innerText = `🤝 Ничья!`; 
+        console.log('Добавлено очко ничьей');
+    }
+    
+    gameActive = false;
+    saveScores();
+    console.log('Очки ПОСЛЕ:', scores);
+}
 
             function renderBoard() {
                 let html = '';
