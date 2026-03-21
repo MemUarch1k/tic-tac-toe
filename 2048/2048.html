@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memuar's 2048</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1a2f3f 0%, #0e1a26 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 20px;
+            box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: min(500px, 100%);
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            font-size: 2.2rem;
+            margin: 0 0 4px 0;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
+        }
+        .sub {
+            text-align: center;
+            color: #8ab3cf;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+        .score-panel {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .score-card {
+            background: #1e3a4a;
+            border-radius: 30px;
+            padding: 12px 20px;
+            text-align: center;
+            flex: 1;
+            box-shadow: 0 6px 0 #0b1a22;
+            border: 1px solid #2f5568;
+        }
+        .score-label {
+            font-size: 0.8rem;
+            color: #8ab3cf;
+            letter-spacing: 1px;
+        }
+        .score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #6ee7f7;
+            line-height: 1;
+        }
+        .best-value {
+            color: #ffb87c;
+        }
+        .board {
+            background: #1a2f3f;
+            border-radius: 36px;
+            padding: 12px;
+            margin-bottom: 24px;
+            box-shadow: inset 0 0 10px #0a1a24, 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            aspect-ratio: 1 / 1;
+        }
+        .tile {
+            background: #1f3e4b;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.08s linear;
+            box-shadow: 0 6px 0 #0b1a22;
+        }
+        /* Цвета плиток — сочные, в стиле крестиков */
+        .tile[data-value="2"] { background: #2c5a6b; color: #e0f0f5; }
+        .tile[data-value="4"] { background: #3a6e82; color: #f0f8ff; }
+        .tile[data-value="8"] { background: #4c8c9e; color: white; }
+        .tile[data-value="16"] { background: #5fa6bb; color: white; }
+        .tile[data-value="32"] { background: #77c0d4; color: white; }
+        .tile[data-value="64"] { background: #94d4e6; color: #1a2f3f; }
+        .tile[data-value="128"] { background: #f5b042; color: #1a2f3f; }
+        .tile[data-value="256"] { background: #f5a623; color: #1a2f3f; }
+        .tile[data-value="512"] { background: #f57c00; color: white; }
+        .tile[data-value="1024"] { background: #e56700; color: white; }
+        .tile[data-value="2048"] { background: #d9530f; color: white; text-shadow: 0 0 5px gold; }
+        .reset-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 60px;
+            border: none;
+            background: #31738f;
+            color: white;
+            font-size: 1.4rem;
+            font-weight: bold;
+            box-shadow: 0 8px 0 #124052;
+            cursor: pointer;
+            transition: 0.07s linear;
+            margin-bottom: 16px;
+        }
+        .reset-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #124052;
+        }
+        .footer {
+            text-align: center;
+            color: #366277;
+            font-size: 0.75rem;
+        }
+        @media (max-width: 480px) {
+            .tile { font-size: 1.3rem; }
+            .score-value { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1>2048</h1>
+    <div class="sub">⚡ соединяй числа, бей рекорды</div>
+
+    <div class="score-panel">
+        <div class="score-card">
+            <div class="score-label">СЧЁТ</div>
+            <div class="score-value" id="score">0</div>
+        </div>
+        <div class="score-card">
+            <div class="score-label">ЛУЧШИЙ</div>
+            <div class="score-value best-value" id="best">0</div>
+        </div>
+    </div>
+
+    <div class="board">
+        <div class="grid" id="grid"></div>
+    </div>
+
+    <button class="reset-btn" id="reset">⟳ НОВАЯ ИГРА</button>
+    <div class="footer">Memuar's Games © 2026</div>
+</div>
+
+<script>
+    (function(){
+        let board = [
+            [0,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0],
+            [0,0,0,0]
+        ];
+        let score = 0;
+        let best = 0;
+        
+        // Загрузка рекорда
+        const savedBest = localStorage.getItem('memuar2048_best');
+        if(savedBest && !isNaN(parseInt(savedBest))) best = parseInt(savedBest);
+        
+        const gridEl = document.getElementById('grid');
+        const scoreEl = document.getElementById('score');
+        const bestEl = document.getElementById('best');
+        
+        function updateUI(){
+            scoreEl.innerText = score;
+            bestEl.innerText = best;
+        }
+        
+        function saveBest(){
+            if(score > best){
+                best = score;
+                localStorage.setItem('memuar2048_best', best);
+                updateUI();
+            }
+        }
+        
+        // Отрисовка поля
+        function render(){
+            const cells = gridEl.children;
+            for(let i=0; i<16; i++){
+                const row = Math.floor(i/4);
+                const col = i%4;
+                const val = board[row][col];
+                const cell = cells[i];
+                if(val === 0){
+                    cell.innerText = '';
+                    cell.setAttribute('data-value', '0');
+                } else {
+                    cell.innerText = val;
+                    cell.setAttribute('data-value', val);
+                }
+            }
+            updateUI();
+        }
+        
+        // Добавление новой цифры (2 или 4)
+        function addRandomTile(){
+            const empty = [];
+            for(let i=0; i<4; i++){
+                for(let j=0; j<4; j++){
+                    if(board[i][j] === 0) empty.push([i,j]);
+                }
+            }
+            if(empty.length === 0) return false;
+            const [row, col] = empty[Math.floor(Math.random() * empty.length)];
+            board[row][col] = Math.random() < 0.9 ? 2 : 4;
+            return true;
+        }
+        
+        // Инициализация новой игры
+        function initGame(){
+            board = [
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0],
+                [0,0,0,0]
+            ];
+            score = 0;
+            addRandomTile();
+            addRandomTile();
+            render();
+            updateUI();
+        }
+        
+        // Сдвиг и слияние строки
+        function operateLine(line){
+            // убираем нули
+            let filtered = line.filter(v => v !== 0);
+            let newLine = [];
+            let skip = false;
+            for(let i=0; i<filtered.length; i++){
+                if(skip){
+                    skip = false;
+                    continue;
+                }
+                if(i+1 < filtered.length && filtered[i] === filtered[i+1]){
+                    let merged = filtered[i] * 2;
+                    newLine.push(merged);
+                    score += merged;
+                    skip = true;
+                } else {
+                    newLine.push(filtered[i]);
+                }
+            }
+            while(newLine.length < 4) newLine.push(0);
+            return newLine;
+        }
+        
+        // Применить ход в направлении
+        function move(direction){
+            let oldBoard = board.map(row => [...row]);
+            let newBoard = Array(4).fill().map(() => Array(4).fill(0));
+            
+            if(direction === 'left'){
+                for(let i=0; i<4; i++){
+                    let line = board[i];
+                    let newLine = operateLine(line);
+                    newBoard[i] = newLine;
+                }
+            }
+            else if(direction === 'right'){
+                for(let i=0; i<4; i++){
+                    let line = [...board[i]].reverse();
+                    let newLine = operateLine(line);
+                    newBoard[i] = newLine.reverse();
+                }
+            }
+            else if(direction === 'up'){
+                for(let j=0; j<4; j++){
+                    let line = [board[0][j], board[1][j], board[2][j], board[3][j]];
+                    let newLine = operateLine(line);
+                    for(let i=0; i<4; i++) newBoard[i][j] = newLine[i];
+                }
+            }
+            else if(direction === 'down'){
+                for(let j=0; j<4; j++){
+                    let line = [board[3][j], board[2][j], board[1][j], board[0][j]];
+                    let newLine = operateLine(line);
+                    for(let i=0; i<4; i++) newBoard[3-i][j] = newLine[i];
+                }
+            }
+            
+            // проверяем, изменилось ли поле
+            let changed = false;
+            for(let i=0; i<4; i++){
+                for(let j=0; j<4; j++){
+                    if(oldBoard[i][j] !== newBoard[i][j]) changed = true;
+                }
+            }
+            if(!changed) return false;
+            
+            board = newBoard;
+            addRandomTile();
+            render();
+            saveBest();
+            
+            // Проверка на победу (2048)
+            for(let i=0;i<4;i++){
+                for(let j=0;j<4;j++){
+                    if(board[i][j] === 2048){
+                        setTimeout(() => alert('🎉 2048! Ты победил! 🎉'), 50);
+                        break;
+                    }
+                }
+            }
+            return true;
+        }
+        
+        // События клавиатуры
+        function handleKey(e){
+            const key = e.key;
+            if(key === 'ArrowLeft') move('left');
+            else if(key === 'ArrowRight') move('right');
+            else if(key === 'ArrowUp') move('up');
+            else if(key === 'ArrowDown') move('down');
+        }
+        
+        // События свайпов для телефона
+        let touchStart = null;
+        function handleTouchStart(e){
+            const touch = e.touches[0];
+            touchStart = { x: touch.clientX, y: touch.clientY };
+        }
+        function handleTouchEnd(e){
+            if(!touchStart) return;
+            const dx = e.changedTouches[0].clientX - touchStart.x;
+            const dy = e.changedTouches[0].clientY - touchStart.y;
+            if(Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+            if(Math.abs(dx) > Math.abs(dy)){
+                if(dx > 0) move('right');
+                else move('left');
+            } else {
+                if(dy > 0) move('down');
+                else move('up');
+            }
+            touchStart = null;
+        }
+        
+        // Создание сетки в DOM
+        function buildGrid(){
+            gridEl.innerHTML = '';
+            for(let i=0; i<16; i++){
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.setAttribute('data-value', '0');
+                gridEl.appendChild(tile);
+            }
+        }
+        
+        // Сброс игры
+        function resetGame(){
+            initGame();
+            saveBest();
+        }
+        
+        // Инициализация
+        buildGrid();
+        initGame();
+        
+        window.addEventListener('keydown', handleKey);
+        gridEl.addEventListener('touchstart', handleTouchStart);
+        gridEl.addEventListener('touchend', handleTouchEnd);
+        document.getElementById('reset').addEventListener('click', resetGame);
+        
+        // Для отладки на ПК мышкой не добавляем, чтобы не мешать, но можно добавить если хочешь
+    })();
+</script>
+</body>
+</html>
