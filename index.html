@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Memuar's Tic-Tac-Toe</title>
     <style>
         * {
@@ -10,15 +10,21 @@
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
         }
         body {
-            width: 100%;
-            min-height: 100vh;
             background: linear-gradient(145deg, #1a2f3f 0%, #0e1a26 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 8px;
+            touch-action: pan-x pan-y;
         }
         .game-container {
             background: rgba(255, 255, 255, 0.05);
@@ -28,14 +34,20 @@
             padding: 20px 16px 28px;
             box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            width: min(420px, 100%);
+            width: min(420px, 95%);
             margin: auto;
+            max-height: 95vh;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+        .game-container::-webkit-scrollbar {
+            display: none;
         }
         h1 {
             text-align: center;
             color: white;
             font-weight: 600;
-            font-size: 2rem;
+            font-size: 1.8rem;
             letter-spacing: 2px;
             margin: 0 0 4px 0;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
@@ -55,10 +67,10 @@
         }
         .score-item {
             background: #1e3a4a;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 40px;
             border: 1px solid #2f5568;
-            box-shadow: 0 5px 0 #0b1a22;
+            box-shadow: 0 4px 0 #0b1a22;
         }
         .score-x { color: #6ee7f7; }
         .score-o { color: #ffb87c; }
@@ -74,29 +86,29 @@
             background: #1e3a4a;
             color: white;
             border: none;
-            padding: 12px 20px;
+            padding: 10px 16px;
             border-radius: 40px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
-            box-shadow: 0 5px 0 #0b1a22;
+            box-shadow: 0 4px 0 #0b1a22;
             transition: 0.1s ease;
             flex: 1;
         }
         .mode-btn.active {
             background: #31738f;
-            box-shadow: 0 5px 0 #124052;
+            box-shadow: 0 4px 0 #124052;
             transform: translateY(-2px);
         }
         .status {
             background: #1e3a4a;
             color: #b3e9ff;
             text-align: center;
-            padding: 14px 10px;
+            padding: 12px;
             border-radius: 60px;
-            font-size: 1.4rem;
+            font-size: 1.2rem;
             font-weight: 500;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             box-shadow: inset 0 2px 5px #0b1c26, 0 8px 12px rgba(0, 0, 0, 0.4);
             border: 1px solid #2f5568;
         }
@@ -105,16 +117,16 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             aspect-ratio: 1 / 1;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
         .cell {
             background: #1f3e4b;
             border-radius: 28px;
-            box-shadow: 0 10px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 8px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 5rem;
+            font-size: 4rem;
             font-weight: 400;
             color: white;
             transition: all 0.07s ease;
@@ -122,7 +134,7 @@
             cursor: pointer;
         }
         .cell:active {
-            transform: translateY(6px);
+            transform: translateY(4px);
             box-shadow: 0 4px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
         }
         .cell.x-move { color: #6ee7f7; text-shadow: 0 0 20px #00ccff; }
@@ -130,113 +142,85 @@
         
         .reset-btn {
             width: 100%;
-            padding: 18px 16px;
+            padding: 14px;
             border-radius: 60px;
             border: none;
             background: #31738f;
             color: white;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 600;
-            box-shadow: 0 12px 0 #124052;
+            box-shadow: 0 8px 0 #124052;
             transition: 0.1s ease;
             cursor: pointer;
             margin-bottom: 16px;
         }
         .reset-btn:active {
-            transform: translateY(8px);
+            transform: translateY(4px);
             box-shadow: 0 4px 0 #124052;
         }
         
-        .difficulty-selector {
+        .difficulty-selector, .first-move {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin: 10px 0;
             justify-content: center;
+            flex-wrap: wrap;
         }
-        .diff-btn {
+        .diff-btn, .first-move-btn {
             background: #152b36;
             color: #8ab3cf;
             border: 1px solid #2f5568;
-            padding: 8px 15px;
+            padding: 6px 12px;
             border-radius: 30px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             cursor: pointer;
-            flex: 1;
         }
-        .diff-btn.active {
+        .diff-btn.active, .first-move-btn.active {
             background: #2a5f7a;
             color: white;
             border-color: #6ee7f7;
         }
         
-        .first-move {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            justify-content: center;
-        }
-        .first-move-btn {
-            background: #1e3a4a;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            box-shadow: 0 3px 0 #0b1a22;
-            flex: 1;
-        }
-        .first-move-btn.active {
-            background: #31738f;
-            box-shadow: 0 3px 0 #124052;
-        }
-        
         .share-section {
             display: flex;
             gap: 10px;
-            margin: 20px 0 10px;
+            margin: 15px 0 10px;
             justify-content: center;
         }
-        .share-btn {
+        .share-btn, .qr-btn {
             background: #2a5f7a;
             color: white;
             border: none;
-            padding: 14px;
+            padding: 10px;
             border-radius: 50px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             cursor: pointer;
-            box-shadow: 0 5px 0 #124052;
-            flex: 1;
-        }
-        .qr-btn {
-            background: #1e3a4a;
-            color: white;
-            border: 1px solid #2f5568;
-            padding: 14px;
-            border-radius: 50px;
-            font-size: 1rem;
-            cursor: pointer;
+            box-shadow: 0 4px 0 #124052;
             flex: 1;
         }
         .qr-code {
             background: white;
-            padding: 15px;
+            padding: 12px;
             border-radius: 20px;
             margin: 10px 0;
             display: none;
             justify-content: center;
         }
-        .qr-code.show {
-            display: flex;
-        }
+        .qr-code.show { display: flex; }
         footer {
             text-align: center;
             color: #366277;
-            margin-top: 15px;
-            font-size: 0.8rem;
+            margin-top: 12px;
+            font-size: 0.7rem;
+        }
+        @media (max-width: 480px) {
+            .cell { font-size: 3rem; }
+            .status { font-size: 1rem; }
+            h1 { font-size: 1.5rem; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://yandex.ru/games/sdk/v2"></script>
 </head>
 <body>
     <div class="game-container">
@@ -284,6 +268,35 @@
 
     <script>
         (function() {
+            // ---------- Яндекс SDK ----------
+            let ysdk = null;
+            let currentLang = 'ru';
+            
+            YaGames.init().then(sdk => {
+                ysdk = sdk;
+                // Автоопределение языка
+                const env = sdk.getEnvironment();
+                currentLang = env.i18n.lang || 'ru';
+                
+                // Если язык английский — меняем текст
+                if (currentLang === 'en') {
+                    document.querySelector('h1').innerText = "Memuar's Tic-Tac-Toe";
+                    document.querySelector('.subtitle').innerText = "❌ tic-tac-toe with smart bot ⭕";
+                    document.getElementById('mode2p').innerText = "👥 2 players";
+                    document.getElementById('modeBot').innerText = "🤖 VS Bot";
+                    document.querySelectorAll('.diff-btn')[0].innerText = "🌱 Easy";
+                    document.querySelectorAll('.diff-btn')[1].innerText = "🌿 Medium";
+                    document.querySelectorAll('.diff-btn')[2].innerText = "🌲 Hard";
+                    document.querySelectorAll('.first-move-btn')[0].innerText = "👤 Player";
+                    document.querySelectorAll('.first-move-btn')[1].innerText = "🤖 Bot";
+                    document.querySelectorAll('.first-move-btn')[2].innerText = "🎲 Random";
+                    document.getElementById('reset').innerText = "⟳ new game";
+                    document.querySelector('.share-btn').innerText = "📱 Share";
+                    document.querySelector('.qr-btn').innerText = "📷 QR code";
+                    statusEl.innerText = "Loading...";
+                }
+            }).catch(e => console.log('SDK init error:', e));
+            
             // ---------- Состояние ----------
             let board = ['', '', '', '', '', '', '', '', ''];
             let currentPlayer = 'X';
@@ -294,7 +307,6 @@
             
             let scores = { X: 0, O: 0, draw: 0 };
             
-            // DOM элементы
             const statusEl = document.getElementById('status');
             const boardEl = document.getElementById('board');
             const mode2p = document.getElementById('mode2p');
@@ -309,7 +321,6 @@
                 [0,4,8], [2,4,6]
             ];
 
-            // Загрузка счёта
             function loadScores() {
                 const saved = localStorage.getItem('memuarTicTacToe');
                 if (saved) {
@@ -329,7 +340,6 @@
                 document.getElementById('scoreDraw').innerText = scores.draw;
             }
 
-            // Проверка победителя
             function checkWinner() {
                 for (let p of winPatterns) {
                     const [a,b,c] = p;
@@ -341,27 +351,23 @@
                 return 'draw';
             }
 
-            // Конец игры
             function endGame(winner) {
                 if (!gameActive) return;
-                
                 gameActive = false;
                 
                 if (winner === 'X') {
                     scores.X++;
-                    statusEl.innerText = '❌ X победил!';
+                    statusEl.innerText = currentLang === 'en' ? '❌ X wins!' : '❌ X победил!';
                 } else if (winner === 'O') {
                     scores.O++;
-                    statusEl.innerText = '⭕ O победил!';
+                    statusEl.innerText = currentLang === 'en' ? '⭕ O wins!' : '⭕ O победил!';
                 } else if (winner === 'draw') {
                     scores.draw++;
-                    statusEl.innerText = '🤝 ничья!';
+                    statusEl.innerText = currentLang === 'en' ? '🤝 Draw!' : '🤝 Ничья!';
                 }
-                
                 saveScores();
             }
 
-            // Отрисовка
             function renderBoard() {
                 let html = '';
                 for (let i = 0; i < 9; i++) {
@@ -373,14 +379,13 @@
                 boardEl.innerHTML = html;
             }
 
-            // Обновление статуса
             function updateStatus() {
                 const winner = checkWinner();
-                
                 if (winner) {
                     endGame(winner);
                 } else {
-                    statusEl.innerText = `ходит ${currentPlayer}`;
+                    const turnText = currentLang === 'en' ? `${currentPlayer} turn` : `ходит ${currentPlayer}`;
+                    statusEl.innerText = turnText;
                     
                     if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
                         setTimeout(() => botMove(), 300);
@@ -388,7 +393,6 @@
                 }
             }
 
-            // Ход игрока
             function handleMove(index) {
                 if (!gameActive) return;
                 if (board[index] !== '') return;
@@ -408,97 +412,61 @@
                 updateStatus();
             }
 
-            // Умный ход для бота
             function getBestMove() {
-                // Победа
                 for (let i = 0; i < 9; i++) {
                     if (board[i] === '') {
                         board[i] = 'O';
-                        if (checkWinner() === 'O') {
-                            board[i] = '';
-                            return i;
-                        }
+                        if (checkWinner() === 'O') { board[i] = ''; return i; }
                         board[i] = '';
                     }
                 }
-                
-                // Блокировка победы игрока
                 for (let i = 0; i < 9; i++) {
                     if (board[i] === '') {
                         board[i] = 'X';
-                        if (checkWinner() === 'X') {
-                            board[i] = '';
-                            return i;
-                        }
+                        if (checkWinner() === 'X') { board[i] = ''; return i; }
                         board[i] = '';
                     }
                 }
-                
-                // Центр
                 if (board[4] === '') return 4;
-                
-                // Углы
                 const corners = [0, 2, 6, 8];
-                for (let i of corners) {
-                    if (board[i] === '') return i;
-                }
-                
-                // Остальное
-                for (let i = 0; i < 9; i++) {
-                    if (board[i] === '') return i;
-                }
-                
+                for (let i of corners) if (board[i] === '') return i;
+                for (let i = 0; i < 9; i++) if (board[i] === '') return i;
                 return -1;
             }
 
-            // Ход бота
             function botMove() {
                 if (!gameActive || currentPlayer !== 'O') return;
-                
                 let moveIndex;
+                const empty = board.reduce((acc, cell, idx) => {
+                    if (cell === '') acc.push(idx);
+                    return acc;
+                }, []);
                 
                 if (difficulty === 'easy') {
-                    const empty = board.reduce((acc, cell, idx) => {
-                        if (cell === '') acc.push(idx);
-                        return acc;
-                    }, []);
                     moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                } 
-                else if (difficulty === 'medium') {
-                    if (Math.random() < 0.4) {
-                        moveIndex = getBestMove();
-                    } else {
-                        const empty = board.reduce((acc, cell, idx) => {
-                            if (cell === '') acc.push(idx);
-                            return acc;
-                        }, []);
-                        moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                    }
-                } 
-                else {
+                } else if (difficulty === 'medium') {
+                    if (Math.random() < 0.4) moveIndex = getBestMove();
+                    else moveIndex = empty[Math.floor(Math.random() * empty.length)];
+                } else {
                     moveIndex = getBestMove();
                 }
                 
                 if (moveIndex !== undefined && moveIndex !== -1) {
                     board[moveIndex] = 'O';
                     renderBoard();
-                    
                     const winner = checkWinner();
                     if (winner) {
                         endGame(winner);
                         renderBoard();
                         return;
                     }
-                    
                     currentPlayer = 'X';
                     updateStatus();
                 }
             }
 
-            // Сброс игры
             function resetGame() {
                 board = ['', '', '', '', '', '', '', '', ''];
-                
                 if (mode === 'bot') {
                     if (firstMove === 'player') currentPlayer = 'X';
                     else if (firstMove === 'bot') currentPlayer = 'O';
@@ -506,7 +474,6 @@
                 } else {
                     currentPlayer = 'X';
                 }
-                
                 gameActive = true;
                 renderBoard();
                 updateStatus();
@@ -552,17 +519,17 @@
 
             resetBtn.addEventListener('click', resetGame);
 
-            // ---------- Кнопки поделиться и QR ----------
+            // ---------- Поделиться и QR ----------
             document.getElementById('shareBtn').addEventListener('click', () => {
                 if (navigator.share) {
                     navigator.share({
-                        title: 'Memuar\'s Tic-Tac-Toe',
-                        text: 'Играй против умного бота!',
+                        title: "Memuar's Tic-Tac-Toe",
+                        text: currentLang === 'en' ? 'Play tic-tac-toe with smart bot!' : 'Играй в крестики-нолики с умным ботом!',
                         url: window.location.href
                     });
                 } else {
                     navigator.clipboard.writeText(window.location.href);
-                    alert('🔗 Ссылка скопирована!');
+                    alert(currentLang === 'en' ? 'Link copied!' : '🔗 Ссылка скопирована!');
                 }
             });
             
@@ -572,17 +539,12 @@
             
             qrBtn.addEventListener('click', () => {
                 if (!qrGenerated) {
-                    new QRCode(qrDiv, {
-                        text: window.location.href,
-                        width: 200,
-                        height: 200
-                    });
+                    new QRCode(qrDiv, { text: window.location.href, width: 180, height: 180 });
                     qrGenerated = true;
                 }
                 qrDiv.classList.toggle('show');
             });
 
-            // Загрузка счёта и старт
             loadScores();
             resetGame();
         })();
