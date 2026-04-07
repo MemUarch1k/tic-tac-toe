@@ -7,7 +7,6 @@
     <style>
         * {
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -19,6 +18,7 @@
             justify-content: center;
             align-items: center;
             padding: 16px;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
         .game-container {
             background: rgba(255, 255, 255, 0.05);
@@ -34,8 +34,7 @@
             color: white;
             font-weight: 600;
             font-size: 2.2rem;
-            margin: 0 0 4px 0;
-            letter-spacing: 2px;
+            margin: 0 0 4px;
             text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
         }
         .sub {
@@ -62,13 +61,11 @@
         .score-label {
             font-size: 0.8rem;
             color: #8ab3cf;
-            letter-spacing: 1px;
         }
         .score-value {
             font-size: 2rem;
             font-weight: bold;
             color: #6ee7f7;
-            line-height: 1;
         }
         .best-value {
             color: #ffb87c;
@@ -98,12 +95,11 @@
             transition: all 0.08s linear;
             box-shadow: 0 6px 0 #0b1a22;
         }
-        /* Цвета плиток — сочные, в стиле крестиков */
-        .tile[data-value="2"] { background: #2c5a6b; color: #e0f0f5; }
-        .tile[data-value="4"] { background: #3a6e82; color: #f0f8ff; }
-        .tile[data-value="8"] { background: #4c8c9e; color: white; }
-        .tile[data-value="16"] { background: #5fa6bb; color: white; }
-        .tile[data-value="32"] { background: #77c0d4; color: white; }
+        .tile[data-value="2"] { background: #2c5a6b; }
+        .tile[data-value="4"] { background: #3a6e82; }
+        .tile[data-value="8"] { background: #4c8c9e; }
+        .tile[data-value="16"] { background: #5fa6bb; }
+        .tile[data-value="32"] { background: #77c0d4; }
         .tile[data-value="64"] { background: #94d4e6; color: #1a2f3f; }
         .tile[data-value="128"] { background: #f5b042; color: #1a2f3f; }
         .tile[data-value="256"] { background: #f5a623; color: #1a2f3f; }
@@ -122,7 +118,6 @@
             box-shadow: 0 8px 0 #124052;
             cursor: pointer;
             transition: 0.07s linear;
-            margin-bottom: 16px;
         }
         .reset-btn:active {
             transform: translateY(4px);
@@ -132,6 +127,7 @@
             text-align: center;
             color: #366277;
             font-size: 0.75rem;
+            margin-top: 16px;
         }
         @media (max-width: 480px) {
             .tile { font-size: 1.3rem; }
@@ -165,6 +161,64 @@
 
 <script>
     (function(){
+        // ---------- ЗВУКИ через Web Audio API ----------
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        function playTone(frequency, duration, volume = 0.3) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const oscillator = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(audioCtx.destination);
+            oscillator.frequency.value = frequency;
+            gain.gain.value = volume;
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, now + duration);
+            oscillator.stop(now + duration);
+        }
+        
+        function playMove() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(440, 0.08, 0.15);
+        }
+        
+        function playMerge() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(660, 0.12, 0.25);
+            setTimeout(() => playTone(880, 0.1, 0.2), 80);
+        }
+        
+        function playWin() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(523.25, 0.3, 0.3);
+            setTimeout(() => playTone(659.25, 0.3, 0.3), 200);
+            setTimeout(() => playTone(783.99, 0.5, 0.4), 400);
+        }
+        
+        function playReset() {
+            initAudio();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            playTone(330, 0.1, 0.2);
+        }
+        
+        // ---------- Игровая логика ----------
         let board = [
             [0,0,0,0],
             [0,0,0,0],
@@ -174,7 +228,6 @@
         let score = 0;
         let best = 0;
         
-        // Загрузка рекорда
         const savedBest = localStorage.getItem('memuar2048_best');
         if(savedBest && !isNaN(parseInt(savedBest))) best = parseInt(savedBest);
         
@@ -195,7 +248,6 @@
             }
         }
         
-        // Отрисовка поля
         function render(){
             const cells = gridEl.children;
             for(let i=0; i<16; i++){
@@ -214,7 +266,6 @@
             updateUI();
         }
         
-        // Добавление новой цифры (2 или 4)
         function addRandomTile(){
             const empty = [];
             for(let i=0; i<4; i++){
@@ -228,7 +279,6 @@
             return true;
         }
         
-        // Инициализация новой игры
         function initGame(){
             board = [
                 [0,0,0,0],
@@ -243,65 +293,68 @@
             updateUI();
         }
         
-        // Сдвиг и слияние строки
         function operateLine(line){
-            // убираем нули
             let filtered = line.filter(v => v !== 0);
             let newLine = [];
             let skip = false;
+            let merged = false;
             for(let i=0; i<filtered.length; i++){
                 if(skip){
                     skip = false;
                     continue;
                 }
                 if(i+1 < filtered.length && filtered[i] === filtered[i+1]){
-                    let merged = filtered[i] * 2;
-                    newLine.push(merged);
-                    score += merged;
+                    let val = filtered[i] * 2;
+                    newLine.push(val);
+                    score += val;
+                    merged = true;
                     skip = true;
                 } else {
                     newLine.push(filtered[i]);
                 }
             }
             while(newLine.length < 4) newLine.push(0);
-            return newLine;
+            return { newLine, merged };
         }
         
-        // Применить ход в направлении
         function move(direction){
             let oldBoard = board.map(row => [...row]);
             let newBoard = Array(4).fill().map(() => Array(4).fill(0));
+            let anyMerged = false;
             
             if(direction === 'left'){
                 for(let i=0; i<4; i++){
                     let line = board[i];
-                    let newLine = operateLine(line);
+                    let { newLine, merged } = operateLine(line);
                     newBoard[i] = newLine;
+                    if(merged) anyMerged = true;
                 }
             }
             else if(direction === 'right'){
                 for(let i=0; i<4; i++){
                     let line = [...board[i]].reverse();
-                    let newLine = operateLine(line);
+                    let { newLine, merged } = operateLine(line);
                     newBoard[i] = newLine.reverse();
+                    if(merged) anyMerged = true;
                 }
             }
             else if(direction === 'up'){
                 for(let j=0; j<4; j++){
                     let line = [board[0][j], board[1][j], board[2][j], board[3][j]];
-                    let newLine = operateLine(line);
+                    let { newLine, merged } = operateLine(line);
                     for(let i=0; i<4; i++) newBoard[i][j] = newLine[i];
+                    if(merged) anyMerged = true;
                 }
             }
             else if(direction === 'down'){
                 for(let j=0; j<4; j++){
                     let line = [board[3][j], board[2][j], board[1][j], board[0][j]];
-                    let newLine = operateLine(line);
+                    let { newLine, merged } = operateLine(line);
                     for(let i=0; i<4; i++) newBoard[3-i][j] = newLine[i];
+                    if(merged) anyMerged = true;
                 }
             }
             
-            // проверяем, изменилось ли поле
             let changed = false;
             for(let i=0; i<4; i++){
                 for(let j=0; j<4; j++){
@@ -315,11 +368,21 @@
             render();
             saveBest();
             
-            // Проверка на победу (2048)
+            // Звуки
+            if (anyMerged) {
+                playMerge();
+            } else {
+                playMove();
+            }
+            
+            // Проверка на 2048
             for(let i=0;i<4;i++){
                 for(let j=0;j<4;j++){
                     if(board[i][j] === 2048){
-                        setTimeout(() => alert('🎉 2048! Ты победил! 🎉'), 50);
+                        setTimeout(() => {
+                            playWin();
+                            alert('🎉 2048! Ты победил! 🎉');
+                        }, 50);
                         break;
                     }
                 }
@@ -327,7 +390,6 @@
             return true;
         }
         
-        // События клавиатуры
         function handleKey(e){
             const key = e.key;
             if(key === 'ArrowLeft') move('left');
@@ -336,7 +398,6 @@
             else if(key === 'ArrowDown') move('down');
         }
         
-        // События свайпов для телефона
         let touchStart = null;
         function handleTouchStart(e){
             const touch = e.touches[0];
@@ -357,7 +418,6 @@
             touchStart = null;
         }
         
-        // Создание сетки в DOM
         function buildGrid(){
             gridEl.innerHTML = '';
             for(let i=0; i<16; i++){
@@ -368,13 +428,12 @@
             }
         }
         
-        // Сброс игры
         function resetGame(){
             initGame();
             saveBest();
+            playReset();
         }
         
-        // Инициализация
         buildGrid();
         initGame();
         
@@ -383,7 +442,17 @@
         gridEl.addEventListener('touchend', handleTouchEnd);
         document.getElementById('reset').addEventListener('click', resetGame);
         
-        // Для отладки на ПК мышкой не добавляем, чтобы не мешать, но можно добавить если хочешь
+        // Активация звука при первом касании (для браузеров)
+        document.body.addEventListener('touchstart', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        });
+        document.body.addEventListener('click', () => {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        });
     })();
 </script>
 </body>
