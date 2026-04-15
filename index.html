@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Memuar's Tic-Tac-Toe</title>
     <style>
-        /* ========== ИСПРАВЛЕНИЕ ПУНКТОВ 3 и 4 ========== */
-        /* Убираем прокрутку, выделение, контекстное меню */
+        /* ---------- Исправление прокрутки и выделения ---------- */
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
@@ -29,7 +28,7 @@
             align-items: center;
         }
         
-        /* ========== ОСНОВНОЙ ДИЗАЙН ========== */
+        /* ---------- Дизайн ---------- */
         .game-container {
             background: #0f1117;
             border-radius: 48px;
@@ -44,6 +43,14 @@
             background: #07090e;
             border-radius: 32px;
             padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #c0d0e6;
+            font-size: 24px;
+            margin: 0 0 15px 0;
+            letter-spacing: 2px;
         }
         
         .score-board {
@@ -93,7 +100,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 52px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.1s linear;
@@ -105,7 +112,7 @@
             transform: scale(0.98);
         }
         
-        .controls {
+        .settings {
             display: flex;
             gap: 10px;
             justify-content: center;
@@ -113,212 +120,251 @@
             margin-bottom: 15px;
         }
         
-        button {
+        select, button {
             background: #1a1f2a;
             border: none;
             color: #c0d0e6;
             font-family: inherit;
             font-size: 14px;
             font-weight: bold;
-            padding: 10px 20px;
+            padding: 10px 16px;
             border-radius: 40px;
             cursor: pointer;
             box-shadow: 0 3px 0 #0b0e12;
         }
         
-        button:active {
+        select:active, button:active {
             transform: translateY(2px);
             box-shadow: 0 1px 0 #0b0e12;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
         }
         
         .status {
             text-align: center;
             color: #e67e22;
             font-weight: bold;
-            margin-top: 10px;
             font-size: 16px;
+            background: #0f1117;
+            padding: 8px;
+            border-radius: 60px;
         }
         
         @media (max-width: 500px) {
             .board { grid-template-columns: repeat(3, minmax(70px, 85px)); gap: 8px; }
-            .cell { font-size: 36px; }
-            button { font-size: 12px; padding: 8px 16px; }
+            .cell { font-size: 42px; }
+            select, button { font-size: 11px; padding: 8px 12px; }
+            h1 { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 <div class="game-container">
     <div class="game-panel">
+        <h1>🎮 MEMUAR'S TIC-TAC-TOE</h1>
+        
         <div class="score-board">
-            <div class="score-card"><div class="score-label">ПОБЕДЫ</div><div class="score-value" id="winsCount">0</div></div>
-            <div class="score-card best"><div class="score-label">РЕКОРД БОТА</div><div class="score-value" id="botWinsCount">0</div></div>
+            <div class="score-card">
+                <div class="score-label">🏆 ИГРОК X</div>
+                <div class="score-value" id="playerXWins">0</div>
+            </div>
+            <div class="score-card best">
+                <div class="score-label">🤖 ИГРОК O</div>
+                <div class="score-value" id="playerOWins">0</div>
+            </div>
         </div>
         
         <div class="board" id="board"></div>
+        
+        <div class="settings">
+            <select id="modeSelect">
+                <option value="bot">🤖 ПРОТИВ БОТА</option>
+                <option value="twoPlayer">👥 ДВА ИГРОКА</option>
+            </select>
+            <select id="difficultySelect">
+                <option value="easy">🟢 ЛЁГКИЙ</option>
+                <option value="medium" selected>🟠 СРЕДНИЙ</option>
+                <option value="hard">🔴 СЛОЖНЫЙ</option>
+            </select>
+            <select id="firstMoveSelect">
+                <option value="player">👤 ИГРОК ПЕРВЫЙ</option>
+                <option value="bot">🤖 БОТ ПЕРВЫЙ</option>
+                <option value="random">🎲 СЛУЧАЙНО</option>
+            </select>
+        </div>
         
         <div class="controls">
             <button id="newGameBtn">🔄 НОВАЯ ИГРА</button>
             <button id="shareBtn">📤 ПОДЕЛИТЬСЯ</button>
         </div>
-        <div class="status" id="gameStatus">▶ ИГРА</div>
+        <div class="status" id="gameStatus">⚡ НАЧНИ ИГРУ</div>
     </div>
 </div>
 
 <script src="https://yandex.ru/games/sdk/v2"></script>
 <script>
-    // ========== ПРАВИЛЬНАЯ ИНИЦИАЛИЗАЦИЯ SDK ==========
+    // ========== ИНИЦИАЛИЗАЦИЯ SDK (ПУНКТЫ 2,6,7) ==========
     let ysdk = null;
     let currentLanguage = 'ru';
-    let gameActive = true;
-    let gamePaused = false;
-    
-    // Функция для перевода (пример)
-    function t(key) {
-        const translations = {
-            'game_status_playing': { ru: '▶ ИГРА', en: '▶ GAME', tr: '▶ OYUN' },
-            'game_status_win': { ru: '🏆 ПОБЕДА!', en: '🏆 YOU WIN!', tr: '🏆 KAZANDIN!' },
-            'game_status_lose': { ru: '💀 ПОРАЖЕНИЕ', en: '💀 DEFEAT', tr: '💀 KAYBETTIN' },
-            'game_status_draw': { ru: '🤝 НИЧЬЯ', en: '🤝 DRAW', tr: '🤝 BERABERLİK' }
-        };
-        return translations[key]?.[currentLanguage] || translations[key]?.['ru'] || key;
-    }
+    let gameActiveForSDK = true;
+    let gamePausedForSDK = false;
     
     async function initSDK() {
         try {
             ysdk = await YaGames.init();
-            
-            // 1. Автоопределение языка (ПУНКТ 6)
             const env = await ysdk.getEnvironment();
             currentLanguage = env.i18n.lang;
-            console.log('Язык игрока:', currentLanguage);
+            if (ysdk.features.LoadingAPI) ysdk.features.LoadingAPI.ready();
             
-            // 2. Сообщаем, что игра загрузилась (ПУНКТ 2)
-            if (ysdk.features.LoadingAPI) {
-                ysdk.features.LoadingAPI.ready();
-            }
-            
-            // 3. Настройка Gameplay API (ПУНКТ 7)
             window.startGameplay = () => {
-                if (ysdk.features.GameplayAPI && gameActive && !gamePaused) {
+                if (ysdk.features.GameplayAPI && gameActiveForSDK && !gamePausedForSDK) {
                     ysdk.features.GameplayAPI.start();
                 }
             };
             window.stopGameplay = () => {
-                if (ysdk.features.GameplayAPI) {
-                    ysdk.features.GameplayAPI.stop();
-                }
+                if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
             };
             
-            // Запускаем геймплей, если игра активна
-            if (gameActive && !gamePaused) {
-                window.startGameplay();
-            }
+            if (gameActiveForSDK && !gamePausedForSDK) window.startGameplay();
             
-            // Обработка видимости вкладки
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) {
                     window.stopGameplay();
-                } else if (gameActive && !gamePaused) {
+                } else if (gameActiveForSDK && !gamePausedForSDK) {
                     window.startGameplay();
                 }
             });
-            
-        } catch (error) {
-            console.error('SDK ошибка:', error);
-        }
+        } catch(e) { console.error('SDK error:', e); }
     }
     
-    // Отключаем контекстное меню и выделение (ПУНКТ 4)
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('dragstart', (e) => e.preventDefault());
     
-    // ========== ОСНОВНОЙ КОД ИГРЫ ==========
+    // ========== ЗВУКИ (Web Audio API) ==========
+    let audioCtx = null;
+    let moveSound = null, winSound = null, loseSound = null, clickSound = null;
+    
+    function initAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            moveSound = createTone(0.12, 660);
+            winSound = createTone(0.6, 880);
+            loseSound = createTone(0.5, 330);
+            clickSound = createTone(0.08, 440);
+        } catch(e) {}
+    }
+    
+    function createTone(duration, freq) {
+        if (!audioCtx) return null;
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+            let t = i / audioCtx.sampleRate;
+            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 12) * 0.3;
+        }
+        return buffer;
+    }
+    
+    function playSound(buffer) {
+        if (!audioCtx || !buffer) return;
+        const source = audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioCtx.destination);
+        source.start();
+    }
+    
+    function unlockAudio() {
+        if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+    }
+    document.body.addEventListener('click', unlockAudio);
+    document.body.addEventListener('touchstart', unlockAudio);
+    
+    // ========== ИГРА ==========
     let board = Array(9).fill(null);
     let currentPlayer = 'X';
     let gameEnded = false;
-    let wins = 0;
-    let botWins = 0;
-    let currentMode = 'bot'; // 'bot' or 'twoPlayer'
-    let botDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+    let winsX = 0, winsO = 0;
+    let currentMode = 'bot';
+    let currentDifficulty = 'medium';
+    let firstMove = 'player';
     
     const boardEl = document.getElementById('board');
-    const winsCountSpan = document.getElementById('winsCount');
-    const botWinsCountSpan = document.getElementById('botWinsCount');
+    const playerXWinsSpan = document.getElementById('playerXWins');
+    const playerOWinsSpan = document.getElementById('playerOWins');
     const gameStatusSpan = document.getElementById('gameStatus');
+    const modeSelect = document.getElementById('modeSelect');
+    const difficultySelect = document.getElementById('difficultySelect');
+    const firstMoveSelect = document.getElementById('firstMoveSelect');
     
     function loadScores() {
         try {
-            const savedWins = localStorage.getItem('ttt_wins');
-            const savedBotWins = localStorage.getItem('ttt_bot_wins');
-            if (savedWins) wins = parseInt(savedWins);
-            if (savedBotWins) botWins = parseInt(savedBotWins);
-            winsCountSpan.innerText = wins;
-            botWinsCountSpan.innerText = botWins;
+            const savedX = localStorage.getItem('ttt_wins_x');
+            const savedO = localStorage.getItem('ttt_wins_o');
+            if (savedX) winsX = parseInt(savedX);
+            if (savedO) winsO = parseInt(savedO);
+            playerXWinsSpan.innerText = winsX;
+            playerOWinsSpan.innerText = winsO;
         } catch(e) {}
     }
     
     function saveScores() {
-        localStorage.setItem('ttt_wins', wins);
-        localStorage.setItem('ttt_bot_wins', botWins);
-        winsCountSpan.innerText = wins;
-        botWinsCountSpan.innerText = botWins;
+        localStorage.setItem('ttt_wins_x', winsX);
+        localStorage.setItem('ttt_wins_o', winsO);
+        playerXWinsSpan.innerText = winsX;
+        playerOWinsSpan.innerText = winsO;
     }
     
     function checkWinner(boardArr) {
-        const lines = [
-            [0,1,2], [3,4,5], [6,7,8],
-            [0,3,6], [1,4,7], [2,5,8],
-            [0,4,8], [2,4,6]
-        ];
+        const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         for (let line of lines) {
             const [a,b,c] = line;
-            if (boardArr[a] && boardArr[a] === boardArr[b] && boardArr[a] === boardArr[c]) {
-                return boardArr[a];
-            }
+            if (boardArr[a] && boardArr[a] === boardArr[b] && boardArr[a] === boardArr[c]) return boardArr[a];
         }
         if (boardArr.every(cell => cell !== null)) return 'draw';
         return null;
     }
     
-    function updateStatus() {
-        if (gameEnded) return;
-        if (currentPlayer === 'X') {
-            gameStatusSpan.innerHTML = t('game_status_playing');
-        } else {
-            gameStatusSpan.innerHTML = '🤖 ХОД БОТА';
-        }
-    }
-    
     function endGame(winner) {
         gameEnded = true;
-        gameActive = false;
-        window.stopGameplay(); // Останавливаем геймплей (ПУНКТ 7)
+        gameActiveForSDK = false;
+        window.stopGameplay();
         
         if (winner === 'X') {
-            wins++;
+            winsX++;
             saveScores();
-            gameStatusSpan.innerHTML = t('game_status_win');
+            playSound(winSound);
+            gameStatusSpan.innerHTML = '🏆 ПОБЕДА! ИГРОК X 🏆';
         } else if (winner === 'O') {
-            botWins++;
+            if (currentMode === 'twoPlayer') winsO++;
+            else winsO++;
             saveScores();
-            gameStatusSpan.innerHTML = t('game_status_lose');
+            playSound(loseSound);
+            gameStatusSpan.innerHTML = currentMode === 'twoPlayer' ? '🏆 ПОБЕДА! ИГРОК O 🏆' : '💀 ПОРАЖЕНИЕ... БОТ ПОБЕДИЛ 💀';
         } else if (winner === 'draw') {
-            gameStatusSpan.innerHTML = t('game_status_draw');
+            gameStatusSpan.innerHTML = '🤝 НИЧЬЯ! 🤝';
         }
         
         setTimeout(() => {
-            if (ysdk && ysdk.features.GameplayAPI) {
-                window.startGameplay();
-            }
-        }, 500);
+            gameActiveForSDK = true;
+            window.startGameplay();
+        }, 800);
     }
     
-    function makeMove(index) {
+    function makeMove(index, isBot = false) {
         if (gameEnded) return false;
         if (board[index] !== null) return false;
-        if (currentMode === 'bot' && currentPlayer !== 'X') return false;
+        if (currentMode === 'bot' && !isBot && currentPlayer !== 'X') return false;
+        if (currentMode === 'twoPlayer' && isBot) return false;
         
         board[index] = currentPlayer;
+        playSound(moveSound);
         renderBoard();
         
         const winner = checkWinner(board);
@@ -330,41 +376,10 @@
         currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
         updateStatus();
         
-        if (currentMode === 'bot' && currentPlayer === 'O' && !gameEnded) {
-            setTimeout(() => botMove(), 300);
+        if (currentMode === 'bot' && !gameEnded && currentPlayer === 'O') {
+            setTimeout(() => botMove(), 200);
         }
         return true;
-    }
-    
-    function botMove() {
-        if (gameEnded) return;
-        if (currentPlayer !== 'O') return;
-        
-        let move = -1;
-        
-        if (botDifficulty === 'easy') {
-            let empty = board.reduce((arr, cell, idx) => {
-                if (cell === null) arr.push(idx);
-                return arr;
-            }, []);
-            if (empty.length > 0) {
-                move = empty[Math.floor(Math.random() * empty.length)];
-            }
-        } else {
-            move = getBestMove(board, 'O');
-        }
-        
-        if (move !== -1) {
-            board[move] = 'O';
-            renderBoard();
-            const winner = checkWinner(board);
-            if (winner) {
-                endGame(winner);
-                return;
-            }
-            currentPlayer = 'X';
-            updateStatus();
-        }
     }
     
     function getBestMove(boardArr, player) {
@@ -373,33 +388,51 @@
         for (let i = 0; i < 9; i++) {
             if (boardArr[i] === null) {
                 boardArr[i] = player;
-                if (checkWinner(boardArr) === player) {
-                    boardArr[i] = null;
-                    return i;
-                }
+                if (checkWinner(boardArr) === player) { boardArr[i] = null; return i; }
                 boardArr[i] = null;
             }
         }
-        
         for (let i = 0; i < 9; i++) {
             if (boardArr[i] === null) {
                 boardArr[i] = opponent;
-                if (checkWinner(boardArr) === opponent) {
-                    boardArr[i] = null;
-                    return i;
-                }
+                if (checkWinner(boardArr) === opponent) { boardArr[i] = null; return i; }
                 boardArr[i] = null;
             }
         }
-        
         let empty = [];
-        for (let i = 0; i < 9; i++) {
-            if (boardArr[i] === null) empty.push(i);
-        }
-        if (empty.length > 0) {
-            return empty[Math.floor(Math.random() * empty.length)];
-        }
+        for (let i = 0; i < 9; i++) if (boardArr[i] === null) empty.push(i);
+        if (empty.length > 0) return empty[Math.floor(Math.random() * empty.length)];
         return -1;
+    }
+    
+    function botMove() {
+        if (gameEnded) return;
+        if (currentPlayer !== 'O') return;
+        
+        let move = -1;
+        let empty = [];
+        for (let i = 0; i < 9; i++) if (board[i] === null) empty.push(i);
+        if (empty.length === 0) return;
+        
+        if (currentDifficulty === 'easy') {
+            move = empty[Math.floor(Math.random() * empty.length)];
+        } else if (currentDifficulty === 'medium') {
+            if (Math.random() < 0.7) move = getBestMove([...board], 'O');
+            else move = empty[Math.floor(Math.random() * empty.length)];
+        } else {
+            move = getBestMove([...board], 'O');
+        }
+        
+        if (move !== -1) makeMove(move, true);
+    }
+    
+    function updateStatus() {
+        if (gameEnded) return;
+        if (currentMode === 'twoPlayer') {
+            gameStatusSpan.innerHTML = currentPlayer === 'X' ? '❌ ХОД ИГРОКА X' : '⭕ ХОД ИГРОКА O';
+        } else {
+            gameStatusSpan.innerHTML = currentPlayer === 'X' ? '❌ ТВОЙ ХОД' : '🤖 ХОД БОТА...';
+        }
     }
     
     function renderBoard() {
@@ -411,7 +444,7 @@
             if (board[i] === 'X') cell.style.color = '#2ecc71';
             if (board[i] === 'O') cell.style.color = '#e74c3c';
             cell.addEventListener('click', (function(idx) {
-                return function() { makeMove(idx); };
+                return function() { makeMove(idx, false); };
             })(i));
             boardEl.appendChild(cell);
         }
@@ -419,46 +452,51 @@
     
     function newGame() {
         board = Array(9).fill(null);
-        currentPlayer = 'X';
         gameEnded = false;
-        gameActive = true;
-        gamePaused = false;
+        gameActiveForSDK = true;
+        
+        let first = firstMoveSelect.value;
+        if (first === 'random') first = Math.random() < 0.5 ? 'player' : 'bot';
+        
+        if (currentMode === 'twoPlayer') {
+            currentPlayer = 'X';
+        } else {
+            currentPlayer = first === 'player' ? 'X' : 'O';
+        }
+        
         renderBoard();
         updateStatus();
         
-        if (ysdk && ysdk.features.GameplayAPI) {
-            window.startGameplay();
-        }
-        
-        if (currentMode === 'bot' && currentPlayer === 'O') {
-            setTimeout(() => botMove(), 300);
+        if (currentMode === 'bot' && currentPlayer === 'O' && !gameEnded) {
+            setTimeout(() => botMove(), 200);
         }
     }
     
     function shareGame() {
+        playSound(clickSound);
         if (ysdk && ysdk.features.Share) {
-            ysdk.features.Share.share({
-                message: 'Сыграем в Крестики-нолики?'
-            });
+            ysdk.features.Share.share({ message: 'Сыграем в Крестики-нолики?' });
         } else {
             alert('Скопируй ссылку: https://memuarch1k.github.io/tic-tac-toe/');
         }
     }
     
-    function setMode(mode) {
-        currentMode = mode;
+    function applySettings() {
+        playSound(clickSound);
+        currentMode = modeSelect.value;
+        currentDifficulty = difficultySelect.value;
+        firstMove = firstMoveSelect.value;
         newGame();
     }
     
-    function setDifficulty(diff) {
-        botDifficulty = diff;
-        newGame();
-    }
-    
-    document.getElementById('newGameBtn').addEventListener('click', newGame);
+    modeSelect.addEventListener('change', applySettings);
+    difficultySelect.addEventListener('change', applySettings);
+    firstMoveSelect.addEventListener('change', applySettings);
+    document.getElementById('newGameBtn').addEventListener('click', () => { playSound(clickSound); newGame(); });
     document.getElementById('shareBtn').addEventListener('click', shareGame);
     
     loadScores();
+    initAudio();
     initSDK();
     newGame();
 </script>
