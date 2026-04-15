@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Memuar's Tic-Tac-Toe</title>
     <style>
-        /* ---------- Исправление прокрутки и выделения ---------- */
         * {
             user-select: none;
             -webkit-tap-highlight-color: transparent;
@@ -28,7 +27,6 @@
             align-items: center;
         }
         
-        /* ---------- Дизайн ---------- */
         .game-container {
             background: #0f1117;
             border-radius: 48px;
@@ -209,7 +207,7 @@
 
 <script src="https://yandex.ru/games/sdk/v2"></script>
 <script>
-    // ========== ИНИЦИАЛИЗАЦИЯ SDK (ПУНКТЫ 2,6,7) ==========
+    // ========== SDK ==========
     let ysdk = null;
     let currentLanguage = 'ru';
     let gameActiveForSDK = true;
@@ -246,7 +244,7 @@
     document.addEventListener('contextmenu', (e) => e.preventDefault());
     document.addEventListener('dragstart', (e) => e.preventDefault());
     
-    // ========== ЗВУКИ (Web Audio API) ==========
+    // ========== ЗВУКИ ПУЗЫРЬКОВ ==========
     let audioCtx = null;
     let moveSound = null, winSound = null, loseSound = null, clickSound = null;
     
@@ -254,20 +252,61 @@
         if (audioCtx) return;
         try {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            moveSound = createTone(0.12, 660);
-            winSound = createTone(0.6, 880);
-            loseSound = createTone(0.5, 330);
-            clickSound = createTone(0.08, 440);
+            moveSound = createBubbleSound(0.08, 880, 0.2);
+            winSound = createBubbleWinSound();
+            loseSound = createBubbleLoseSound();
+            clickSound = createBubbleSound(0.05, 660, 0.15);
         } catch(e) {}
     }
     
-    function createTone(duration, freq) {
+    // Обычный пузырёк
+    function createBubbleSound(duration, freq, volume = 0.25) {
         if (!audioCtx) return null;
         const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < buffer.length; i++) {
             let t = i / audioCtx.sampleRate;
-            data[i] = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 12) * 0.3;
+            let pop = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 25);
+            let bubble = Math.sin(2 * Math.PI * (freq * 0.5) * t) * Math.exp(-t * 15);
+            data[i] = (pop + bubble) * volume * (1 - t/duration);
+        }
+        return buffer;
+    }
+    
+    // Победа — фейерверк пузырьков
+    function createBubbleWinSound() {
+        if (!audioCtx) return null;
+        const duration = 0.6;
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+            let t = i / audioCtx.sampleRate;
+            let value = 0;
+            for (let j = 0; j < 5; j++) {
+                let freq = 400 + j * 100;
+                let start = j * 0.08;
+                if (t > start) {
+                    let tt = t - start;
+                    value += Math.sin(2 * Math.PI * freq * tt) * Math.exp(-tt * 20) * 0.15;
+                }
+            }
+            data[i] = value * (1 - t/duration);
+        }
+        return buffer;
+    }
+    
+    // Поражение — угасающий пузырёк
+    function createBubbleLoseSound() {
+        if (!audioCtx) return null;
+        const duration = 0.5;
+        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < buffer.length; i++) {
+            let t = i / audioCtx.sampleRate;
+            let freq = 440 - t * 300;
+            let bubble = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 8);
+            let pop = Math.sin(2 * Math.PI * 220 * t) * Math.exp(-t * 30) * 0.5;
+            data[i] = (bubble + pop) * 0.3 * (1 - t/duration);
         }
         return buffer;
     }
@@ -342,8 +381,7 @@
             playSound(winSound);
             gameStatusSpan.innerHTML = '🏆 ПОБЕДА! ИГРОК X 🏆';
         } else if (winner === 'O') {
-            if (currentMode === 'twoPlayer') winsO++;
-            else winsO++;
+            winsO++;
             saveScores();
             playSound(loseSound);
             gameStatusSpan.innerHTML = currentMode === 'twoPlayer' ? '🏆 ПОБЕДА! ИГРОК O 🏆' : '💀 ПОРАЖЕНИЕ... БОТ ПОБЕДИЛ 💀';
