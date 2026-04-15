@@ -207,122 +207,7 @@
 
 <script src="https://yandex.ru/games/sdk/v2"></script>
 <script>
-    // ========== SDK ==========
-    let ysdk = null;
-    let currentLanguage = 'ru';
-    let gameActiveForSDK = true;
-    let gamePausedForSDK = false;
-    
-    async function initSDK() {
-        try {
-            ysdk = await YaGames.init();
-            const env = await ysdk.getEnvironment();
-            currentLanguage = env.i18n.lang;
-            if (ysdk.features.LoadingAPI) ysdk.features.LoadingAPI.ready();
-            
-            window.startGameplay = () => {
-                if (ysdk.features.GameplayAPI && gameActiveForSDK && !gamePausedForSDK) {
-                    ysdk.features.GameplayAPI.start();
-                }
-            };
-            window.stopGameplay = () => {
-                if (ysdk.features.GameplayAPI) ysdk.features.GameplayAPI.stop();
-            };
-            
-            if (gameActiveForSDK && !gamePausedForSDK) window.startGameplay();
-            
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) {
-                    window.stopGameplay();
-                } else if (gameActiveForSDK && !gamePausedForSDK) {
-                    window.startGameplay();
-                }
-            });
-        } catch(e) { console.error('SDK error:', e); }
-    }
-    
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
-    document.addEventListener('dragstart', (e) => e.preventDefault());
-    
-    // ========== ЗВУКИ (ГРОМЧЕ И ДЛИННЕЕ) ==========
-    let audioCtx = null;
-    let moveSound = null, winSound = null, loseSound = null, clickSound = null;
-    
-    function initAudio() {
-        if (audioCtx) return;
-        try {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            moveSound = createBubbleSound(0.12, 880, 0.35);
-            winSound = createWinSound();
-            loseSound = createLoseSound();
-            clickSound = createBubbleSound(0.08, 660, 0.25);
-        } catch(e) {}
-    }
-    
-    function createBubbleSound(duration, freq, volume = 0.3) {
-        if (!audioCtx) return null;
-        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < buffer.length; i++) {
-            let t = i / audioCtx.sampleRate;
-            let pop = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 20);
-            let bubble = Math.sin(2 * Math.PI * (freq * 0.6) * t) * Math.exp(-t * 12);
-            data[i] = (pop + bubble) * volume * (1 - t/duration);
-        }
-        return buffer;
-    }
-    
-    function createWinSound() {
-        if (!audioCtx) return null;
-        const duration = 0.9;
-        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < buffer.length; i++) {
-            let t = i / audioCtx.sampleRate;
-            let value = 0;
-            let times = [0, 0.12, 0.25, 0.4, 0.55];
-            let freqs = [523, 659, 784, 880, 1047];
-            for (let j = 0; j < times.length; j++) {
-                if (t > times[j]) {
-                    let tt = t - times[j];
-                    value += Math.sin(2 * Math.PI * freqs[j] * tt) * Math.exp(-tt * 12) * 0.2;
-                }
-            }
-            data[i] = value * (1 - t/duration) * 0.8;
-        }
-        return buffer;
-    }
-    
-    function createLoseSound() {
-        if (!audioCtx) return null;
-        const duration = 0.8;
-        const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < buffer.length; i++) {
-            let t = i / audioCtx.sampleRate;
-            let freq = 440 - t * 200;
-            let bubble = Math.sin(2 * Math.PI * freq * t) * Math.exp(-t * 6);
-            let pop = Math.sin(2 * Math.PI * 220 * t) * Math.exp(-t * 20) * 0.6;
-            data[i] = (bubble + pop) * 0.5 * (1 - t/duration);
-        }
-        return buffer;
-    }
-    
-    function playSound(buffer) {
-        if (!audioCtx || !buffer) return;
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start();
-    }
-    
-    function unlockAudio() {
-        if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
-    }
-    document.body.addEventListener('click', unlockAudio);
-    document.body.addEventListener('touchstart', unlockAudio);
-    
-    // ========== ИГРА ==========
+    // ========== 1. ИНИЦИАЛИЗАЦИЯ ИГРЫ ==========
     let board = Array(9).fill(null);
     let currentPlayer = 'X';
     let gameEnded = false;
@@ -331,6 +216,7 @@
     let currentDifficulty = 'medium';
     let firstMove = 'player';
     
+    // DOM элементы
     const boardEl = document.getElementById('board');
     const playerXWinsSpan = document.getElementById('playerXWins');
     const playerOWinsSpan = document.getElementById('playerOWins');
@@ -339,20 +225,67 @@
     const difficultySelect = document.getElementById('difficultySelect');
     const firstMoveSelect = document.getElementById('firstMoveSelect');
     
+    // ========== 2. ЗВУКИ (ПРОСТЫЕ И НАДЁЖНЫЕ) ==========
+    let audioCtx = null;
+    let soundsReady = false;
+    
+    function initAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // Сразу создаём базовые звуки
+            soundsReady = true;
+        } catch(e) { console.log('Audio not supported'); }
+    }
+    
+    function playBeep(freq, duration, volume = 0.3) {
+        if (!audioCtx || audioCtx.state !== 'running') return;
+        try {
+            const now = audioCtx.currentTime;
+            const oscillator = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            oscillator.connect(gain);
+            gain.connect(audioCtx.destination);
+            oscillator.frequency.value = freq;
+            gain.gain.value = volume;
+            oscillator.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, now + duration);
+            oscillator.stop(now + duration);
+        } catch(e) {}
+    }
+    
+    function playMoveSound() { playBeep(880, 0.12, 0.25); }
+    function playWinSound() { playBeep(1047, 0.4, 0.4); setTimeout(() => playBeep(1319, 0.3, 0.35), 200); }
+    function playLoseSound() { playBeep(440, 0.5, 0.3); setTimeout(() => playBeep(330, 0.4, 0.25), 250); }
+    function playClickSound() { playBeep(660, 0.08, 0.2); }
+    
+    function unlockAudio() {
+        if (audioCtx && audioCtx.state !== 'running') {
+            audioCtx.resume().then(() => {
+                console.log('Audio ready');
+                playClickSound(); // тестовый звук
+            }).catch(e => console.log('Audio resume error:', e));
+        }
+    }
+    
+    // ========== 3. ЛОГИКА ИГРЫ ==========
     function loadScores() {
         try {
             const savedX = localStorage.getItem('ttt_wins_x');
             const savedO = localStorage.getItem('ttt_wins_o');
             if (savedX) winsX = parseInt(savedX);
             if (savedO) winsO = parseInt(savedO);
-            playerXWinsSpan.innerText = winsX;
-            playerOWinsSpan.innerText = winsO;
+            updateScoreDisplay();
         } catch(e) {}
     }
     
     function saveScores() {
         localStorage.setItem('ttt_wins_x', winsX);
         localStorage.setItem('ttt_wins_o', winsO);
+        updateScoreDisplay();
+    }
+    
+    function updateScoreDisplay() {
         playerXWinsSpan.innerText = winsX;
         playerOWinsSpan.innerText = winsO;
     }
@@ -369,26 +302,23 @@
     
     function endGame(winner) {
         gameEnded = true;
-        gameActiveForSDK = false;
-        window.stopGameplay();
         
         if (winner === 'X') {
             winsX++;
             saveScores();
-            playSound(winSound);
+            if (soundsReady && audioCtx?.state === 'running') playWinSound();
             gameStatusSpan.innerHTML = '🏆 ПОБЕДА! ИГРОК X 🏆';
         } else if (winner === 'O') {
             winsO++;
             saveScores();
-            playSound(loseSound);
+            if (soundsReady && audioCtx?.state === 'running') playLoseSound();
             gameStatusSpan.innerHTML = currentMode === 'twoPlayer' ? '🏆 ПОБЕДА! ИГРОК O 🏆' : '💀 ПОРАЖЕНИЕ... БОТ ПОБЕДИЛ 💀';
         } else if (winner === 'draw') {
             gameStatusSpan.innerHTML = '🤝 НИЧЬЯ! 🤝';
         }
         
         setTimeout(() => {
-            gameActiveForSDK = true;
-            window.startGameplay();
+            // Ничего не делаем, ждём новую игру
         }, 800);
     }
     
@@ -399,7 +329,7 @@
         if (currentMode === 'twoPlayer' && isBot) return false;
         
         board[index] = currentPlayer;
-        playSound(moveSound);
+        if (soundsReady && audioCtx?.state === 'running') playMoveSound();
         renderBoard();
         
         const winner = checkWinner(board);
@@ -488,7 +418,6 @@
     function newGame() {
         board = Array(9).fill(null);
         gameEnded = false;
-        gameActiveForSDK = true;
         
         let first = firstMoveSelect.value;
         if (first === 'random') first = Math.random() < 0.5 ? 'player' : 'bot';
@@ -508,32 +437,69 @@
     }
     
     function shareGame() {
-        playSound(clickSound);
-        if (ysdk && ysdk.features.Share) {
-            ysdk.features.Share.share({ message: 'Сыграем в Крестики-нолики?' });
+        if (soundsReady && audioCtx?.state === 'running') playClickSound();
+        if (window.ysdk && window.ysdk.features?.Share) {
+            window.ysdk.features.Share.share({ message: 'Сыграем в Крестики-нолики?' });
         } else {
             alert('Скопируй ссылку: https://memuarch1k.github.io/tic-tac-toe/');
         }
     }
     
     function applySettings() {
-        playSound(clickSound);
+        if (soundsReady && audioCtx?.state === 'running') playClickSound();
         currentMode = modeSelect.value;
         currentDifficulty = difficultySelect.value;
         firstMove = firstMoveSelect.value;
         newGame();
     }
     
-    modeSelect.addEventListener('change', applySettings);
-    difficultySelect.addEventListener('change', applySettings);
-    firstMoveSelect.addEventListener('change', applySettings);
-    document.getElementById('newGameBtn').addEventListener('click', () => { playSound(clickSound); newGame(); });
-    document.getElementById('shareBtn').addEventListener('click', shareGame);
+    // ========== 4. SDK (ЯНДЕКС) ==========
+    window.initSDK = async function() {
+        try {
+            window.ysdk = await YaGames.init();
+            const env = await window.ysdk.getEnvironment();
+            if (window.ysdk.features.LoadingAPI) window.ysdk.features.LoadingAPI.ready();
+            
+            window.startGameplay = () => {
+                if (window.ysdk.features.GameplayAPI && !gameEnded) {
+                    window.ysdk.features.GameplayAPI.start();
+                }
+            };
+            window.stopGameplay = () => {
+                if (window.ysdk.features.GameplayAPI) window.ysdk.features.GameplayAPI.stop();
+            };
+            
+            window.startGameplay();
+        } catch(e) { console.error('SDK error:', e); }
+    };
+    
+    // ========== 5. ЗАПУСК ВСЕГО ==========
+    function setupEvents() {
+        modeSelect.addEventListener('change', applySettings);
+        difficultySelect.addEventListener('change', applySettings);
+        firstMoveSelect.addEventListener('change', applySettings);
+        document.getElementById('newGameBtn').addEventListener('click', () => { 
+            if (soundsReady && audioCtx?.state === 'running') playClickSound(); 
+            newGame(); 
+        });
+        document.getElementById('shareBtn').addEventListener('click', shareGame);
+        
+        // Разблокировка звука
+        document.body.addEventListener('click', () => {
+            initAudio();
+            unlockAudio();
+        });
+        document.body.addEventListener('touchstart', () => {
+            initAudio();
+            unlockAudio();
+        });
+    }
     
     loadScores();
     initAudio();
-    initSDK();
+    setupEvents();
     newGame();
+    window.initSDK();
 </script>
 </body>
 </html>
