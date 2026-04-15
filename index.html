@@ -2,552 +2,465 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Memuar's Tic-Tac-Toe</title>
     <style>
+        /* ========== ИСПРАВЛЕНИЕ ПУНКТОВ 3 и 4 ========== */
+        /* Убираем прокрутку, выделение, контекстное меню */
         * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            margin: 0;
-            padding: 0;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
+        
         html, body {
-            width: 100%;
-            height: 100%;
             overflow: hidden;
             position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #0a0c12;
+            font-family: 'Segoe UI', 'Courier New', monospace;
         }
+        
         body {
-            background: linear-gradient(145deg, #1a2f3f 0%, #0e1a26 100%);
             display: flex;
             justify-content: center;
             align-items: center;
-            touch-action: pan-x pan-y;
         }
-        .game-container {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 48px;
-            padding: 20px 16px 28px;
-            box-shadow: 0 25px 40px -10px rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            width: min(420px, 95%);
-            margin: auto;
-            max-height: 95vh;
-            overflow-y: auto;
-            touch-action: pan-y;
-        }
-        .game-container::-webkit-scrollbar {
-            display: none;
-        }
-        h1 {
-            text-align: center;
-            color: white;
-            font-weight: 600;
-            font-size: 1.8rem;
-            letter-spacing: 2px;
-            margin: 0 0 4px 0;
-            text-shadow: 0 4px 10px rgba(0, 200, 255, 0.4);
-        }
-        .subtitle {
-            text-align: center;
-            color: #8ab3cf;
-            font-size: 0.8rem;
-            margin-bottom: 16px;
-        }
-        .scoreboard {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            color: white;
-            font-size: 1.2rem;
-        }
-        .score-item {
-            background: #1e3a4a;
-            padding: 8px 16px;
-            border-radius: 40px;
-            border: 1px solid #2f5568;
-            box-shadow: 0 4px 0 #0b1a22;
-        }
-        .score-x { color: #6ee7f7; }
-        .score-o { color: #ffb87c; }
-        .score-draw { color: #a0a0a0; }
         
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            justify-content: center;
+        /* ========== ОСНОВНОЙ ДИЗАЙН ========== */
+        .game-container {
+            background: #0f1117;
+            border-radius: 48px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: auto;
         }
-        .mode-btn {
-            background: #1e3a4a;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #0b1a22;
-            transition: 0.1s ease;
+        
+        .game-panel {
+            background: #07090e;
+            border-radius: 32px;
+            padding: 20px;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .score-card {
+            background: #0f1117;
+            border-radius: 24px;
+            padding: 10px 20px;
+            text-align: center;
             flex: 1;
         }
-        .mode-btn.active {
-            background: #31738f;
-            box-shadow: 0 4px 0 #124052;
-            transform: translateY(-2px);
+        
+        .score-label {
+            color: #5a6e8a;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-        .status {
-            background: #1e3a4a;
-            color: #b3e9ff;
-            text-align: center;
-            padding: 12px;
-            border-radius: 60px;
-            font-size: 1.2rem;
-            font-weight: 500;
-            margin-bottom: 20px;
-            box-shadow: inset 0 2px 5px #0b1c26, 0 8px 12px rgba(0, 0, 0, 0.4);
-            border: 1px solid #2f5568;
+        
+        .score-value {
+            color: #2ecc71;
+            font-size: 28px;
+            font-weight: bold;
         }
+        
+        .best .score-value {
+            color: #f39c12;
+        }
+        
         .board {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            aspect-ratio: 1 / 1;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(3, minmax(80px, 100px));
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
         }
+        
         .cell {
-            background: #1f3e4b;
-            border-radius: 28px;
-            box-shadow: 0 8px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
+            aspect-ratio: 1 / 1;
+            background: #1a1f2a;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
-            font-weight: 400;
-            color: white;
-            transition: all 0.07s ease;
-            aspect-ratio: 1 / 1;
+            font-size: 48px;
+            font-weight: bold;
             cursor: pointer;
-        }
-        .cell:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #0b1a22, 0 8px 15px rgba(0, 0, 0, 0.6);
-        }
-        .cell.x-move { color: #6ee7f7; text-shadow: 0 0 20px #00ccff; }
-        .cell.o-move { color: #ffb87c; text-shadow: 0 0 20px #ff9500; }
-        
-        .reset-btn {
-            width: 100%;
-            padding: 14px;
-            border-radius: 60px;
-            border: none;
-            background: #31738f;
-            color: white;
-            font-size: 1.4rem;
-            font-weight: 600;
-            box-shadow: 0 8px 0 #124052;
-            transition: 0.1s ease;
-            cursor: pointer;
-            margin-bottom: 16px;
-        }
-        .reset-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #124052;
+            transition: 0.1s linear;
+            color: #c0d0e6;
         }
         
-        .difficulty-selector, .first-move {
-            display: flex;
-            gap: 8px;
-            margin: 10px 0;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .diff-btn, .first-move-btn {
-            background: #152b36;
-            color: #8ab3cf;
-            border: 1px solid #2f5568;
-            padding: 6px 12px;
-            border-radius: 30px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-        .diff-btn.active, .first-move-btn.active {
-            background: #2a5f7a;
-            color: white;
-            border-color: #6ee7f7;
+        .cell:hover {
+            background: #2a2f3e;
+            transform: scale(0.98);
         }
         
-        .share-section {
+        .controls {
             display: flex;
             gap: 10px;
-            margin: 15px 0 10px;
             justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
         }
-        .share-btn, .qr-btn {
-            background: #2a5f7a;
-            color: white;
+        
+        button {
+            background: #1a1f2a;
             border: none;
-            padding: 10px;
-            border-radius: 50px;
-            font-size: 0.9rem;
+            color: #c0d0e6;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 40px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #124052;
-            flex: 1;
+            box-shadow: 0 3px 0 #0b0e12;
         }
-        .qr-code {
-            background: white;
-            padding: 12px;
-            border-radius: 20px;
-            margin: 10px 0;
-            display: none;
-            justify-content: center;
+        
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #0b0e12;
         }
-        .qr-code.show { display: flex; }
-        footer {
+        
+        .status {
             text-align: center;
-            color: #366277;
-            margin-top: 12px;
-            font-size: 0.7rem;
+            color: #e67e22;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 16px;
         }
-        @media (max-width: 480px) {
-            .cell { font-size: 3rem; }
-            .status { font-size: 1rem; }
-            h1 { font-size: 1.5rem; }
+        
+        @media (max-width: 500px) {
+            .board { grid-template-columns: repeat(3, minmax(70px, 85px)); gap: 8px; }
+            .cell { font-size: 36px; }
+            button { font-size: 12px; padding: 8px 16px; }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://yandex.ru/games/sdk/v2"></script>
 </head>
 <body>
-    <div class="game-container">
-        <h1>Memuar's Tic-Tac-Toe</h1>
-        <div class="subtitle">❌ крестики-нолики с умным ботом ⭕</div>
-        
-        <div class="scoreboard">
-            <div class="score-item"><span class="score-x">❌</span> <span id="scoreX">0</span></div>
-            <div class="score-item"><span class="score-draw">🤝</span> <span id="scoreDraw">0</span></div>
-            <div class="score-item"><span class="score-o">⭕</span> <span id="scoreO">0</span></div>
+<div class="game-container">
+    <div class="game-panel">
+        <div class="score-board">
+            <div class="score-card"><div class="score-label">ПОБЕДЫ</div><div class="score-value" id="winsCount">0</div></div>
+            <div class="score-card best"><div class="score-label">РЕКОРД БОТА</div><div class="score-value" id="botWinsCount">0</div></div>
         </div>
-        
-        <div class="mode-selector">
-            <button class="mode-btn" id="mode2p">👥 2 игрока</button>
-            <button class="mode-btn active" id="modeBot">🤖 Против бота</button>
-        </div>
-        
-        <div class="difficulty-selector" id="difficultyPanel">
-            <button class="diff-btn" data-diff="easy">🌱 Легкий</button>
-            <button class="diff-btn active" data-diff="medium">🌿 Средний</button>
-            <button class="diff-btn" data-diff="hard">🌲 Сложный</button>
-        </div>
-        
-        <div class="first-move" id="firstMovePanel">
-            <button class="first-move-btn" data-first="player">👤 Игрок</button>
-            <button class="first-move-btn active" data-first="bot">🤖 Бот</button>
-            <button class="first-move-btn" data-first="random">🎲 Случайно</button>
-        </div>
-        
-        <div class="status" id="status">Загрузка...</div>
         
         <div class="board" id="board"></div>
         
-        <button class="reset-btn" id="reset">⟳ новая игра</button>
-        
-        <div class="share-section">
-            <button class="share-btn" id="shareBtn">📱 Поделиться</button>
-            <button class="qr-btn" id="qrToggleBtn">📷 QR-код</button>
+        <div class="controls">
+            <button id="newGameBtn">🔄 НОВАЯ ИГРА</button>
+            <button id="shareBtn">📤 ПОДЕЛИТЬСЯ</button>
         </div>
-        
-        <div class="qr-code" id="qrCode"></div>
-        
-        <footer>⚡ Memuar's Games © 2026</footer>
+        <div class="status" id="gameStatus">▶ ИГРА</div>
     </div>
+</div>
 
-    <script>
-        (function() {
-            // ---------- Яндекс SDK ----------
-            let ysdk = null;
-            let currentLang = 'ru';
+<script src="https://yandex.ru/games/sdk/v2"></script>
+<script>
+    // ========== ПРАВИЛЬНАЯ ИНИЦИАЛИЗАЦИЯ SDK ==========
+    let ysdk = null;
+    let currentLanguage = 'ru';
+    let gameActive = true;
+    let gamePaused = false;
+    
+    // Функция для перевода (пример)
+    function t(key) {
+        const translations = {
+            'game_status_playing': { ru: '▶ ИГРА', en: '▶ GAME', tr: '▶ OYUN' },
+            'game_status_win': { ru: '🏆 ПОБЕДА!', en: '🏆 YOU WIN!', tr: '🏆 KAZANDIN!' },
+            'game_status_lose': { ru: '💀 ПОРАЖЕНИЕ', en: '💀 DEFEAT', tr: '💀 KAYBETTIN' },
+            'game_status_draw': { ru: '🤝 НИЧЬЯ', en: '🤝 DRAW', tr: '🤝 BERABERLİK' }
+        };
+        return translations[key]?.[currentLanguage] || translations[key]?.['ru'] || key;
+    }
+    
+    async function initSDK() {
+        try {
+            ysdk = await YaGames.init();
             
-            YaGames.init().then(sdk => {
-                ysdk = sdk;
-                // Автоопределение языка
-                const env = sdk.getEnvironment();
-                currentLang = env.i18n.lang || 'ru';
-                
-                // Если язык английский — меняем текст
-                if (currentLang === 'en') {
-                    document.querySelector('h1').innerText = "Memuar's Tic-Tac-Toe";
-                    document.querySelector('.subtitle').innerText = "❌ tic-tac-toe with smart bot ⭕";
-                    document.getElementById('mode2p').innerText = "👥 2 players";
-                    document.getElementById('modeBot').innerText = "🤖 VS Bot";
-                    document.querySelectorAll('.diff-btn')[0].innerText = "🌱 Easy";
-                    document.querySelectorAll('.diff-btn')[1].innerText = "🌿 Medium";
-                    document.querySelectorAll('.diff-btn')[2].innerText = "🌲 Hard";
-                    document.querySelectorAll('.first-move-btn')[0].innerText = "👤 Player";
-                    document.querySelectorAll('.first-move-btn')[1].innerText = "🤖 Bot";
-                    document.querySelectorAll('.first-move-btn')[2].innerText = "🎲 Random";
-                    document.getElementById('reset').innerText = "⟳ new game";
-                    document.querySelector('.share-btn').innerText = "📱 Share";
-                    document.querySelector('.qr-btn').innerText = "📷 QR code";
-                    statusEl.innerText = "Loading...";
-                }
-            }).catch(e => console.log('SDK init error:', e));
+            // 1. Автоопределение языка (ПУНКТ 6)
+            const env = await ysdk.getEnvironment();
+            currentLanguage = env.i18n.lang;
+            console.log('Язык игрока:', currentLanguage);
             
-            // ---------- Состояние ----------
-            let board = ['', '', '', '', '', '', '', '', ''];
-            let currentPlayer = 'X';
-            let gameActive = true;
-            let mode = 'bot';
-            let difficulty = 'medium';
-            let firstMove = 'bot';
-            
-            let scores = { X: 0, O: 0, draw: 0 };
-            
-            const statusEl = document.getElementById('status');
-            const boardEl = document.getElementById('board');
-            const mode2p = document.getElementById('mode2p');
-            const modeBot = document.getElementById('modeBot');
-            const resetBtn = document.getElementById('reset');
-            const diffBtns = document.querySelectorAll('.diff-btn');
-            const firstMoveBtns = document.querySelectorAll('.first-move-btn');
-            
-            const winPatterns = [
-                [0,1,2], [3,4,5], [6,7,8],
-                [0,3,6], [1,4,7], [2,5,8],
-                [0,4,8], [2,4,6]
-            ];
-
-            function loadScores() {
-                const saved = localStorage.getItem('memuarTicTacToe');
-                if (saved) {
-                    try { scores = JSON.parse(saved); } catch(e) {}
-                }
-                updateScoreDisplay();
+            // 2. Сообщаем, что игра загрузилась (ПУНКТ 2)
+            if (ysdk.features.LoadingAPI) {
+                ysdk.features.LoadingAPI.ready();
             }
             
-            function saveScores() {
-                localStorage.setItem('memuarTicTacToe', JSON.stringify(scores));
-                updateScoreDisplay();
+            // 3. Настройка Gameplay API (ПУНКТ 7)
+            window.startGameplay = () => {
+                if (ysdk.features.GameplayAPI && gameActive && !gamePaused) {
+                    ysdk.features.GameplayAPI.start();
+                }
+            };
+            window.stopGameplay = () => {
+                if (ysdk.features.GameplayAPI) {
+                    ysdk.features.GameplayAPI.stop();
+                }
+            };
+            
+            // Запускаем геймплей, если игра активна
+            if (gameActive && !gamePaused) {
+                window.startGameplay();
             }
             
-            function updateScoreDisplay() {
-                document.getElementById('scoreX').innerText = scores.X;
-                document.getElementById('scoreO').innerText = scores.O;
-                document.getElementById('scoreDraw').innerText = scores.draw;
-            }
-
-            function checkWinner() {
-                for (let p of winPatterns) {
-                    const [a,b,c] = p;
-                    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-                        return board[a];
-                    }
-                }
-                if (board.includes('')) return null;
-                return 'draw';
-            }
-
-            function endGame(winner) {
-                if (!gameActive) return;
-                gameActive = false;
-                
-                if (winner === 'X') {
-                    scores.X++;
-                    statusEl.innerText = currentLang === 'en' ? '❌ X wins!' : '❌ X победил!';
-                } else if (winner === 'O') {
-                    scores.O++;
-                    statusEl.innerText = currentLang === 'en' ? '⭕ O wins!' : '⭕ O победил!';
-                } else if (winner === 'draw') {
-                    scores.draw++;
-                    statusEl.innerText = currentLang === 'en' ? '🤝 Draw!' : '🤝 Ничья!';
-                }
-                saveScores();
-            }
-
-            function renderBoard() {
-                let html = '';
-                for (let i = 0; i < 9; i++) {
-                    let cellClass = 'cell';
-                    if (board[i] === 'X') cellClass += ' x-move';
-                    if (board[i] === 'O') cellClass += ' o-move';
-                    html += `<div class="${cellClass}" data-index="${i}">${board[i]}</div>`;
-                }
-                boardEl.innerHTML = html;
-            }
-
-            function updateStatus() {
-                const winner = checkWinner();
-                if (winner) {
-                    endGame(winner);
-                } else {
-                    const turnText = currentLang === 'en' ? `${currentPlayer} turn` : `ходит ${currentPlayer}`;
-                    statusEl.innerText = turnText;
-                    
-                    if (mode === 'bot' && currentPlayer === 'O' && gameActive) {
-                        setTimeout(() => botMove(), 300);
-                    }
-                }
-            }
-
-            function handleMove(index) {
-                if (!gameActive) return;
-                if (board[index] !== '') return;
-                if (mode === 'bot' && currentPlayer !== 'X') return;
-                
-                board[index] = currentPlayer;
-                renderBoard();
-                
-                const winner = checkWinner();
-                if (winner) {
-                    endGame(winner);
-                    renderBoard();
-                    return;
-                }
-                
-                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-                updateStatus();
-            }
-
-            function getBestMove() {
-                for (let i = 0; i < 9; i++) {
-                    if (board[i] === '') {
-                        board[i] = 'O';
-                        if (checkWinner() === 'O') { board[i] = ''; return i; }
-                        board[i] = '';
-                    }
-                }
-                for (let i = 0; i < 9; i++) {
-                    if (board[i] === '') {
-                        board[i] = 'X';
-                        if (checkWinner() === 'X') { board[i] = ''; return i; }
-                        board[i] = '';
-                    }
-                }
-                if (board[4] === '') return 4;
-                const corners = [0, 2, 6, 8];
-                for (let i of corners) if (board[i] === '') return i;
-                for (let i = 0; i < 9; i++) if (board[i] === '') return i;
-                return -1;
-            }
-
-            function botMove() {
-                if (!gameActive || currentPlayer !== 'O') return;
-                let moveIndex;
-                const empty = board.reduce((acc, cell, idx) => {
-                    if (cell === '') acc.push(idx);
-                    return acc;
-                }, []);
-                
-                if (difficulty === 'easy') {
-                    moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                } else if (difficulty === 'medium') {
-                    if (Math.random() < 0.4) moveIndex = getBestMove();
-                    else moveIndex = empty[Math.floor(Math.random() * empty.length)];
-                } else {
-                    moveIndex = getBestMove();
-                }
-                
-                if (moveIndex !== undefined && moveIndex !== -1) {
-                    board[moveIndex] = 'O';
-                    renderBoard();
-                    const winner = checkWinner();
-                    if (winner) {
-                        endGame(winner);
-                        renderBoard();
-                        return;
-                    }
-                    currentPlayer = 'X';
-                    updateStatus();
-                }
-            }
-
-            function resetGame() {
-                board = ['', '', '', '', '', '', '', '', ''];
-                if (mode === 'bot') {
-                    if (firstMove === 'player') currentPlayer = 'X';
-                    else if (firstMove === 'bot') currentPlayer = 'O';
-                    else currentPlayer = Math.random() < 0.5 ? 'X' : 'O';
-                } else {
-                    currentPlayer = 'X';
-                }
-                gameActive = true;
-                renderBoard();
-                updateStatus();
-            }
-
-            // ---------- События ----------
-            boardEl.addEventListener('click', (e) => {
-                const cell = e.target.closest('.cell');
-                if (!cell) return;
-                const index = cell.dataset.index;
-                if (index !== undefined) handleMove(parseInt(index));
-            });
-
-            mode2p.addEventListener('click', () => {
-                mode = '2p';
-                mode2p.classList.add('active');
-                modeBot.classList.remove('active');
-                resetGame();
-            });
-            
-            modeBot.addEventListener('click', () => {
-                mode = 'bot';
-                modeBot.classList.add('active');
-                mode2p.classList.remove('active');
-                resetGame();
-            });
-            
-            diffBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    diffBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    difficulty = btn.dataset.diff;
-                });
-            });
-            
-            firstMoveBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    firstMoveBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    firstMove = btn.dataset.first;
-                });
-            });
-
-            resetBtn.addEventListener('click', resetGame);
-
-            // ---------- Поделиться и QR ----------
-            document.getElementById('shareBtn').addEventListener('click', () => {
-                if (navigator.share) {
-                    navigator.share({
-                        title: "Memuar's Tic-Tac-Toe",
-                        text: currentLang === 'en' ? 'Play tic-tac-toe with smart bot!' : 'Играй в крестики-нолики с умным ботом!',
-                        url: window.location.href
-                    });
-                } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert(currentLang === 'en' ? 'Link copied!' : '🔗 Ссылка скопирована!');
+            // Обработка видимости вкладки
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    window.stopGameplay();
+                } else if (gameActive && !gamePaused) {
+                    window.startGameplay();
                 }
             });
             
-            const qrDiv = document.getElementById('qrCode');
-            const qrBtn = document.getElementById('qrToggleBtn');
-            let qrGenerated = false;
-            
-            qrBtn.addEventListener('click', () => {
-                if (!qrGenerated) {
-                    new QRCode(qrDiv, { text: window.location.href, width: 180, height: 180 });
-                    qrGenerated = true;
+        } catch (error) {
+            console.error('SDK ошибка:', error);
+        }
+    }
+    
+    // Отключаем контекстное меню и выделение (ПУНКТ 4)
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    document.addEventListener('dragstart', (e) => e.preventDefault());
+    
+    // ========== ОСНОВНОЙ КОД ИГРЫ ==========
+    let board = Array(9).fill(null);
+    let currentPlayer = 'X';
+    let gameEnded = false;
+    let wins = 0;
+    let botWins = 0;
+    let currentMode = 'bot'; // 'bot' or 'twoPlayer'
+    let botDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+    
+    const boardEl = document.getElementById('board');
+    const winsCountSpan = document.getElementById('winsCount');
+    const botWinsCountSpan = document.getElementById('botWinsCount');
+    const gameStatusSpan = document.getElementById('gameStatus');
+    
+    function loadScores() {
+        try {
+            const savedWins = localStorage.getItem('ttt_wins');
+            const savedBotWins = localStorage.getItem('ttt_bot_wins');
+            if (savedWins) wins = parseInt(savedWins);
+            if (savedBotWins) botWins = parseInt(savedBotWins);
+            winsCountSpan.innerText = wins;
+            botWinsCountSpan.innerText = botWins;
+        } catch(e) {}
+    }
+    
+    function saveScores() {
+        localStorage.setItem('ttt_wins', wins);
+        localStorage.setItem('ttt_bot_wins', botWins);
+        winsCountSpan.innerText = wins;
+        botWinsCountSpan.innerText = botWins;
+    }
+    
+    function checkWinner(boardArr) {
+        const lines = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+        for (let line of lines) {
+            const [a,b,c] = line;
+            if (boardArr[a] && boardArr[a] === boardArr[b] && boardArr[a] === boardArr[c]) {
+                return boardArr[a];
+            }
+        }
+        if (boardArr.every(cell => cell !== null)) return 'draw';
+        return null;
+    }
+    
+    function updateStatus() {
+        if (gameEnded) return;
+        if (currentPlayer === 'X') {
+            gameStatusSpan.innerHTML = t('game_status_playing');
+        } else {
+            gameStatusSpan.innerHTML = '🤖 ХОД БОТА';
+        }
+    }
+    
+    function endGame(winner) {
+        gameEnded = true;
+        gameActive = false;
+        window.stopGameplay(); // Останавливаем геймплей (ПУНКТ 7)
+        
+        if (winner === 'X') {
+            wins++;
+            saveScores();
+            gameStatusSpan.innerHTML = t('game_status_win');
+        } else if (winner === 'O') {
+            botWins++;
+            saveScores();
+            gameStatusSpan.innerHTML = t('game_status_lose');
+        } else if (winner === 'draw') {
+            gameStatusSpan.innerHTML = t('game_status_draw');
+        }
+        
+        setTimeout(() => {
+            if (ysdk && ysdk.features.GameplayAPI) {
+                window.startGameplay();
+            }
+        }, 500);
+    }
+    
+    function makeMove(index) {
+        if (gameEnded) return false;
+        if (board[index] !== null) return false;
+        if (currentMode === 'bot' && currentPlayer !== 'X') return false;
+        
+        board[index] = currentPlayer;
+        renderBoard();
+        
+        const winner = checkWinner(board);
+        if (winner) {
+            endGame(winner);
+            return true;
+        }
+        
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        updateStatus();
+        
+        if (currentMode === 'bot' && currentPlayer === 'O' && !gameEnded) {
+            setTimeout(() => botMove(), 300);
+        }
+        return true;
+    }
+    
+    function botMove() {
+        if (gameEnded) return;
+        if (currentPlayer !== 'O') return;
+        
+        let move = -1;
+        
+        if (botDifficulty === 'easy') {
+            let empty = board.reduce((arr, cell, idx) => {
+                if (cell === null) arr.push(idx);
+                return arr;
+            }, []);
+            if (empty.length > 0) {
+                move = empty[Math.floor(Math.random() * empty.length)];
+            }
+        } else {
+            move = getBestMove(board, 'O');
+        }
+        
+        if (move !== -1) {
+            board[move] = 'O';
+            renderBoard();
+            const winner = checkWinner(board);
+            if (winner) {
+                endGame(winner);
+                return;
+            }
+            currentPlayer = 'X';
+            updateStatus();
+        }
+    }
+    
+    function getBestMove(boardArr, player) {
+        const opponent = player === 'O' ? 'X' : 'O';
+        
+        for (let i = 0; i < 9; i++) {
+            if (boardArr[i] === null) {
+                boardArr[i] = player;
+                if (checkWinner(boardArr) === player) {
+                    boardArr[i] = null;
+                    return i;
                 }
-                qrDiv.classList.toggle('show');
+                boardArr[i] = null;
+            }
+        }
+        
+        for (let i = 0; i < 9; i++) {
+            if (boardArr[i] === null) {
+                boardArr[i] = opponent;
+                if (checkWinner(boardArr) === opponent) {
+                    boardArr[i] = null;
+                    return i;
+                }
+                boardArr[i] = null;
+            }
+        }
+        
+        let empty = [];
+        for (let i = 0; i < 9; i++) {
+            if (boardArr[i] === null) empty.push(i);
+        }
+        if (empty.length > 0) {
+            return empty[Math.floor(Math.random() * empty.length)];
+        }
+        return -1;
+    }
+    
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerText = board[i] || '';
+            if (board[i] === 'X') cell.style.color = '#2ecc71';
+            if (board[i] === 'O') cell.style.color = '#e74c3c';
+            cell.addEventListener('click', (function(idx) {
+                return function() { makeMove(idx); };
+            })(i));
+            boardEl.appendChild(cell);
+        }
+    }
+    
+    function newGame() {
+        board = Array(9).fill(null);
+        currentPlayer = 'X';
+        gameEnded = false;
+        gameActive = true;
+        gamePaused = false;
+        renderBoard();
+        updateStatus();
+        
+        if (ysdk && ysdk.features.GameplayAPI) {
+            window.startGameplay();
+        }
+        
+        if (currentMode === 'bot' && currentPlayer === 'O') {
+            setTimeout(() => botMove(), 300);
+        }
+    }
+    
+    function shareGame() {
+        if (ysdk && ysdk.features.Share) {
+            ysdk.features.Share.share({
+                message: 'Сыграем в Крестики-нолики?'
             });
-
-            loadScores();
-            resetGame();
-        })();
-    </script>
+        } else {
+            alert('Скопируй ссылку: https://memuarch1k.github.io/tic-tac-toe/');
+        }
+    }
+    
+    function setMode(mode) {
+        currentMode = mode;
+        newGame();
+    }
+    
+    function setDifficulty(diff) {
+        botDifficulty = diff;
+        newGame();
+    }
+    
+    document.getElementById('newGameBtn').addEventListener('click', newGame);
+    document.getElementById('shareBtn').addEventListener('click', shareGame);
+    
+    loadScores();
+    initSDK();
+    newGame();
+</script>
 </body>
 </html>
